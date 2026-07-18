@@ -1,9 +1,5 @@
 /**
- * GalleryContext – centralized state for image favoriting.
- *
- * Persists the set of favorited image IDs in AsyncStorage (@favorites).
- * Provides `toggleFavorite`, `isFavorite`, and the full `favorites` map
- * keyed by image ID → PicsumImage for rendering the Favorites tab.
+ * GalleryContext – centralized state for image favoriting using storage wrapper.
  */
 
 import React, {
@@ -14,8 +10,8 @@ import React, {
   useMemo,
   useState,
 } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
+import { storage } from '../utils/storage';
 import type { PicsumImage } from '../types/picsum';
 
 // ---------------------------------------------------------------------------
@@ -28,15 +24,11 @@ const FAVORITES_KEY = '@favorites';
 // Types
 // ---------------------------------------------------------------------------
 
-/** Map of image id → full PicsumImage object. */
 type FavoritesMap = Record<string, PicsumImage>;
 
 interface GalleryContextValue {
-  /** Full map of all favorited images. */
   favorites: FavoritesMap;
-  /** Check whether a specific image is favorited. */
   isFavorite: (imageId: string) => boolean;
-  /** Toggle an image in/out of favorites. */
   toggleFavorite: (image: PicsumImage) => void;
 }
 
@@ -59,13 +51,13 @@ export function GalleryProvider({
 }: GalleryProviderProps): React.JSX.Element {
   const [favorites, setFavorites] = useState<FavoritesMap>({});
 
-  // Hydrate from AsyncStorage on mount.
+  // Hydrate from storage on mount.
   useEffect(() => {
     (async () => {
       try {
-        const raw = await AsyncStorage.getItem(FAVORITES_KEY);
-        if (raw) {
-          setFavorites(JSON.parse(raw) as FavoritesMap);
+        const data = await storage.get<FavoritesMap>(FAVORITES_KEY);
+        if (data) {
+          setFavorites(data);
         }
       } catch {
         // Silently ignore corrupt data.
@@ -73,10 +65,9 @@ export function GalleryProvider({
     })();
   }, []);
 
-  // Persist whenever favorites change.
   const persist = useCallback(async (next: FavoritesMap) => {
     try {
-      await AsyncStorage.setItem(FAVORITES_KEY, JSON.stringify(next));
+      await storage.set(FAVORITES_KEY, next);
     } catch {
       // Best-effort persistence.
     }
@@ -117,10 +108,6 @@ export function GalleryProvider({
 // Hook
 // ---------------------------------------------------------------------------
 
-/**
- * Access the gallery favorites state.
- * Must be called inside a `<GalleryProvider>`.
- */
 export function useGallery(): GalleryContextValue {
   const ctx = useContext(GalleryContext);
   if (ctx === undefined) {

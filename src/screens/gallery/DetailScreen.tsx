@@ -21,7 +21,7 @@ import { useGallery } from '../../context/GalleryContext';
 import { useTheme } from '../../context/ThemeContext';
 import { downloadImageToGallery } from '../../utils/imageDownloader';
 import { showToast } from '../../components/Toast';
-import type { DetailScreenProps } from '../../navigation/types';
+import type { DetailScreenProps } from '../../navigation/Types';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -43,11 +43,9 @@ export default function DetailScreen({
 
   const favorited = isFavorite(itemId);
 
-  // Use download_url for high-res, fallback to picsum CDN.
   const highResUrl = image?.download_url ?? `https://picsum.photos/id/${itemId}/1200/800`;
   const previewUrl = `https://picsum.photos/id/${itemId}/${Math.round(SCREEN_WIDTH)}/${Math.round(SCREEN_WIDTH * 0.75)}`;
 
-  // -- Download handler ─────────────────────────────────────────
   const handleDownload = useCallback(async (): Promise<void> => {
     if (isDownloading) {
       return;
@@ -62,7 +60,6 @@ export default function DetailScreen({
     setIsDownloading(false);
   }, [isDownloading, highResUrl, itemId]);
 
-  // -- Share handler ────────────────────────────────────────────
   const handleShare = useCallback(async (): Promise<void> => {
     try {
       const shareUrl = image?.url ?? `https://picsum.photos/id/${itemId}/info`;
@@ -78,7 +75,6 @@ export default function DetailScreen({
     }
   }, [image, itemId]);
 
-  // -- Full-screen modal ────────────────────────────────────────
   const renderFullScreenViewer = (): React.JSX.Element => (
     <Modal
       visible={isFullScreen}
@@ -129,8 +125,6 @@ export default function DetailScreen({
     </Modal>
   );
 
-  // -- Main render ──────────────────────────────────────────────
-
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <ScrollView
@@ -153,7 +147,6 @@ export default function DetailScreen({
             onLoad={() => setImageLoaded(true)}
           />
 
-          {/* Tap to expand label */}
           <View style={styles.expandHint}>
             <Text style={styles.expandHintText}>⛶  Tap to view full screen</Text>
           </View>

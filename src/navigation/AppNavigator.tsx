@@ -31,11 +31,11 @@ import { useTheme } from '../context/ThemeContext';
 import LoginScreen from '../screens/auth/LoginScreen';
 import RegisterScreen from '../screens/auth/RegisterScreen';
 
-// Screens – App
-import HomeScreen from '../screens/app/HomeScreen';
-import DetailScreen from '../screens/app/DetailScreen';
-import FavoritesScreen from '../screens/app/FavoritesScreen';
-import ProfileScreen from '../screens/app/ProfileScreen';
+// Screens – App (refactored structure)
+import HomeScreen from '../screens/gallery/HomeScreen';
+import DetailScreen from '../screens/gallery/DetailScreen';
+import FavoritesScreen from '../screens/user/FavoritesScreen';
+import ProfileScreen from '../screens/user/ProfileScreen';
 
 // Types
 import type {
@@ -43,7 +43,7 @@ import type {
   HomeStackParamList,
   AppTabsParamList,
   RootStackParamList,
-} from './types';
+} from './Types';
 
 // ---------------------------------------------------------------------------
 // Navigator instances

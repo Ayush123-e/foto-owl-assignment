@@ -20,8 +20,11 @@ import { useForm, Controller } from 'react-hook-form';
 
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
+import { Input } from '../../components/Input';
+import { Button } from '../../components/Button';
+import { validationRules } from '../../utils/validations';
 import type { Gender, ProfileUpdate } from '../../context/AuthContext';
-import type { ProfileScreenProps } from '../../navigation/types';
+import type { ProfileScreenProps } from '../../navigation/Types';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -135,7 +138,7 @@ export default function ProfileScreen(
         contentContainerStyle={styles.scroll}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}>
-        {/* ── Avatar & Quick Settings ─────────────────────────── */}
+        {/* Avatar & Quick Settings */}
         <View style={styles.avatarRow}>
           <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
             <Text style={[styles.avatarText, { color: colors.buttonText }]}>
@@ -146,7 +149,6 @@ export default function ProfileScreen(
             <Text style={[styles.avatarName, { color: colors.text }]}>{currentUser.fullName}</Text>
             <Text style={[styles.avatarEmail, { color: colors.textSecondary }]}>{currentUser.email}</Text>
           </View>
-          {/* Quick theme toggle */}
           <Pressable
             style={[styles.themeToggle, { backgroundColor: colors.card, borderColor: colors.border }]}
             onPress={toggleTheme}
@@ -157,110 +159,82 @@ export default function ProfileScreen(
           </Pressable>
         </View>
 
-        {/* ── Edit / Cancel toggle ────────────────────────────── */}
+        {/* Edit / Cancel toggle */}
         <View style={styles.actionRow}>
           {isEditing ? (
             <>
-              <Pressable
-                style={[styles.actionBtn, styles.cancelBtn, { backgroundColor: colors.inputBackground }]}
-                onPress={handleCancel}>
-                <Text style={[styles.cancelBtnText, { color: colors.textSecondary }]}>Cancel</Text>
-              </Pressable>
-              <Pressable
-                style={[styles.actionBtn, styles.saveBtn, { backgroundColor: colors.success }, isSubmitting && styles.disabledBtn]}
+              <Button
+                label="Cancel"
+                onPress={handleCancel}
+                variant="secondary"
+                style={styles.actionBtn}
+              />
+              <Button
+                label={isSubmitting ? 'Saving…' : 'Save'}
                 onPress={handleSubmit(onSave)}
-                disabled={isSubmitting}>
-                <Text style={[styles.saveBtnText, { color: colors.buttonText }]}>
-                  {isSubmitting ? 'Saving…' : 'Save'}
-                </Text>
-              </Pressable>
+                disabled={isSubmitting}
+                style={styles.actionBtn}
+              />
             </>
           ) : (
-            <Pressable
-              style={[styles.actionBtn, styles.editBtn, { backgroundColor: colors.primary }]}
-              onPress={() => setIsEditing(true)}>
-              <Text style={[styles.editBtnText, { color: colors.buttonText }]}>✎  Edit Profile</Text>
-            </Pressable>
+            <Button
+              label="✎  Edit Profile"
+              onPress={() => setIsEditing(true)}
+              style={styles.editBtn}
+            />
           )}
         </View>
 
-        {/* ── Full Name ───────────────────────────────────────── */}
-        <Text style={[styles.label, { color: colors.textSecondary }]}>Full Name</Text>
+        {/* Full Name */}
         {isEditing ? (
-          <>
-            <Controller
-              control={control}
-              name="fullName"
-              rules={{
-                required: 'Full name is required',
-                minLength: { value: 2, message: 'Must be at least 2 characters' },
-              }}
-              render={({ field: { onChange, onBlur, value } }) => (
-                <TextInput
-                  style={[
-                    styles.input,
-                    {
-                      backgroundColor: colors.inputBackground,
-                      color: colors.text,
-                      borderColor: errors.fullName ? colors.error : colors.border,
-                    },
-                  ]}
-                  autoCapitalize="words"
-                  onBlur={onBlur}
-                  onChangeText={onChange}
-                  value={value}
-                />
-              )}
-            />
-            {errors.fullName && (
-              <Text style={[styles.error, { color: colors.error }]}>{errors.fullName.message}</Text>
+          <Controller
+            control={control}
+            name="fullName"
+            rules={validationRules.fullName}
+            render={({ field: { onChange, onBlur, value } }) => (
+              <Input
+                label="Full Name"
+                value={value}
+                onBlur={onBlur}
+                onChangeText={onChange}
+                error={errors.fullName?.message}
+                autoCapitalize="words"
+              />
             )}
-          </>
+          />
         ) : (
-          <Text style={[styles.readonlyValue, { color: colors.text }]}>{currentUser.fullName}</Text>
+          <View>
+            <Text style={[styles.label, { color: colors.textSecondary }]}>Full Name</Text>
+            <Text style={[styles.readonlyValue, { color: colors.text }]}>{currentUser.fullName}</Text>
+          </View>
         )}
 
-        {/* ── Email ───────────────────────────────────────────── */}
-        <Text style={[styles.label, { color: colors.textSecondary }]}>Email</Text>
+        {/* Email */}
         {isEditing ? (
-          <>
-            <Controller
-              control={control}
-              name="email"
-              rules={{
-                required: 'Email is required',
-                pattern: {
-                  value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-                  message: 'Enter a valid email address',
-                },
-              }}
-              render={({ field: { onChange, onBlur, value } }) => (
-                <TextInput
-                  style={[
-                    styles.input,
-                    {
-                      backgroundColor: colors.inputBackground,
-                      color: colors.text,
-                      borderColor: errors.email ? colors.error : colors.border,
-                    },
-                  ]}
-                  autoCapitalize="none"
-                  keyboardType="email-address"
-                  onBlur={onBlur}
-                  onChangeText={onChange}
-                  value={value}
-                />
-              )}
-            />
-            {errors.email && (
-              <Text style={[styles.error, { color: colors.error }]}>{errors.email.message}</Text>
+          <Controller
+            control={control}
+            name="email"
+            rules={validationRules.email}
+            render={({ field: { onChange, onBlur, value } }) => (
+              <Input
+                label="Email"
+                value={value}
+                onBlur={onBlur}
+                onChangeText={onChange}
+                error={errors.email?.message}
+                autoCapitalize="none"
+                keyboardType="email-address"
+              />
             )}
-          </>
+          />
         ) : (
-          <Text style={[styles.readonlyValue, { color: colors.text }]}>{currentUser.email}</Text>
+          <View>
+            <Text style={[styles.label, { color: colors.textSecondary }]}>Email</Text>
+            <Text style={[styles.readonlyValue, { color: colors.text }]}>{currentUser.email}</Text>
+          </View>
         )}
 
-        {/* ── Gender ──────────────────────────────────────────── */}
+        {/* Gender */}
         <Text style={[styles.label, { color: colors.textSecondary }]}>Gender</Text>
         {isEditing ? (
           <Controller
@@ -292,94 +266,66 @@ export default function ProfileScreen(
           <Text style={[styles.readonlyValue, { color: colors.text }]}>{currentUser.gender}</Text>
         )}
 
-        {/* ── Mobile ──────────────────────────────────────────── */}
-        <Text style={[styles.label, { color: colors.textSecondary }]}>Mobile</Text>
+        {/* Mobile */}
         {isEditing ? (
-          <>
-            <Controller
-              control={control}
-              name="mobile"
-              rules={{
-                required: 'Mobile number is required',
-                pattern: {
-                  value: /^[0-9]{10}$/,
-                  message: 'Must be exactly 10 digits',
-                },
-              }}
-              render={({ field: { onChange, onBlur, value } }) => (
-                <TextInput
-                  style={[
-                    styles.input,
-                    {
-                      backgroundColor: colors.inputBackground,
-                      color: colors.text,
-                      borderColor: errors.mobile ? colors.error : colors.border,
-                    },
-                  ]}
-                  keyboardType="number-pad"
-                  maxLength={10}
-                  onBlur={onBlur}
-                  onChangeText={onChange}
-                  value={value}
-                />
-              )}
-            />
-            {errors.mobile && (
-              <Text style={[styles.error, { color: colors.error }]}>{errors.mobile.message}</Text>
+          <Controller
+            control={control}
+            name="mobile"
+            rules={validationRules.mobile}
+            render={({ field: { onChange, onBlur, value } }) => (
+              <Input
+                label="Mobile Number"
+                value={value}
+                onBlur={onBlur}
+                onChangeText={onChange}
+                error={errors.mobile?.message}
+                keyboardType="number-pad"
+                maxLength={10}
+              />
             )}
-          </>
+          />
         ) : (
-          <Text style={[styles.readonlyValue, { color: colors.text }]}>{currentUser.mobile}</Text>
+          <View style={{ marginTop: 12 }}>
+            <Text style={[styles.label, { color: colors.textSecondary }]}>Mobile</Text>
+            <Text style={[styles.readonlyValue, { color: colors.text }]}>{currentUser.mobile}</Text>
+          </View>
         )}
 
-        {/* ── Address ─────────────────────────────────────────── */}
-        <Text style={[styles.label, { color: colors.textSecondary }]}>Address</Text>
+        {/* Address */}
         {isEditing ? (
-          <>
-            <Controller
-              control={control}
-              name="address"
-              rules={{ required: 'Address is required' }}
-              render={({ field: { onChange, onBlur, value } }) => (
-                <TextInput
-                  style={[
-                    styles.input,
-                    styles.textArea,
-                    {
-                      backgroundColor: colors.inputBackground,
-                      color: colors.text,
-                      borderColor: errors.address ? colors.error : colors.border,
-                    },
-                  ]}
-                  multiline
-                  numberOfLines={3}
-                  textAlignVertical="top"
-                  onBlur={onBlur}
-                  onChangeText={onChange}
-                  value={value}
-                />
-              )}
-            />
-            {errors.address && (
-              <Text style={[styles.error, { color: colors.error }]}>{errors.address.message}</Text>
+          <Controller
+            control={control}
+            name="address"
+            rules={validationRules.address}
+            render={({ field: { onChange, onBlur, value } }) => (
+              <Input
+                label="Address"
+                value={value}
+                onBlur={onBlur}
+                onChangeText={onChange}
+                error={errors.address?.message}
+                isTextArea
+              />
             )}
-          </>
+          />
         ) : (
-          <Text style={[styles.readonlyValue, { color: colors.text }]}>{currentUser.address}</Text>
+          <View>
+            <Text style={[styles.label, { color: colors.textSecondary }]}>Address</Text>
+            <Text style={[styles.readonlyValue, { color: colors.text }]}>{currentUser.address}</Text>
+          </View>
         )}
 
-        {/* ── City ────────────────────────────────────────────── */}
-        <Text style={[styles.label, { color: colors.textSecondary }]}>City</Text>
+        {/* City */}
         {isEditing ? (
           <Controller
             control={control}
             name="city"
-            rules={{ required: 'Please select a city' }}
+            rules={validationRules.city}
             render={({ field: { onChange, value } }) => (
-              <View>
+              <View style={{ marginBottom: 12 }}>
+                <Text style={[styles.label, { color: colors.textSecondary }]}>City</Text>
                 <Pressable
                   style={[
-                    styles.input,
                     styles.dropdown,
                     {
                       backgroundColor: colors.inputBackground,
@@ -424,21 +370,23 @@ export default function ProfileScreen(
             )}
           />
         ) : (
-          <Text style={[styles.readonlyValue, { color: colors.text }]}>{currentUser.city}</Text>
+          <View>
+            <Text style={[styles.label, { color: colors.textSecondary }]}>City</Text>
+            <Text style={[styles.readonlyValue, { color: colors.text }]}>{currentUser.city}</Text>
+          </View>
         )}
 
-        {/* ── Logout ──────────────────────────────────────────── */}
-        <Pressable style={styles.logoutBtn} onPress={logout}>
-          <Text style={styles.logoutBtnText}>Log Out</Text>
-        </Pressable>
+        {/* Logout */}
+        <Button
+          label="Log Out"
+          onPress={logout}
+          variant="danger"
+          style={{ marginTop: 24 }}
+        />
       </ScrollView>
     </KeyboardAvoidingView>
   );
 }
-
-// ---------------------------------------------------------------------------
-// Styles
-// ---------------------------------------------------------------------------
 
 const styles = StyleSheet.create({
   container: {
@@ -454,8 +402,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 60,
   },
-
-  // Avatar row
   avatarRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -492,8 +438,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 1,
   },
-
-  // Action buttons row
   actionRow: {
     flexDirection: 'row',
     gap: 10,
@@ -501,36 +445,10 @@ const styles = StyleSheet.create({
   },
   actionBtn: {
     flex: 1,
-    borderRadius: 10,
-    paddingVertical: 12,
-    alignItems: 'center',
   },
   editBtn: {
-    // colors.primary applied dynamically
+    flex: 1,
   },
-  editBtnText: {
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  cancelBtn: {
-    // colors.inputBackground applied dynamically
-  },
-  cancelBtnText: {
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  saveBtn: {
-    // colors.success applied dynamically
-  },
-  saveBtnText: {
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  disabledBtn: {
-    opacity: 0.6,
-  },
-
-  // Fields
   label: {
     fontSize: 13,
     fontWeight: '600',
@@ -544,24 +462,6 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 4,
   },
-  input: {
-    borderRadius: 10,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    fontSize: 15,
-    borderWidth: 1,
-  },
-  textArea: {
-    minHeight: 80,
-    paddingTop: 14,
-  },
-  error: {
-    fontSize: 12,
-    marginTop: 4,
-    marginLeft: 4,
-  },
-
-  // Radio buttons
   radioGroup: {
     flexDirection: 'row',
     gap: 20,
@@ -588,13 +488,14 @@ const styles = StyleSheet.create({
   radioLabel: {
     fontSize: 14,
   },
-
-  // City dropdown
   dropdown: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
   },
   dropdownArrow: {
     fontSize: 12,
@@ -614,17 +515,13 @@ const styles = StyleSheet.create({
   dropdownItemText: {
     fontSize: 14,
   },
-
-  // Logout
   logoutBtn: {
-    backgroundColor: '#e74c3c',
     borderRadius: 10,
     paddingVertical: 14,
     alignItems: 'center',
     marginTop: 36,
   },
   logoutBtnText: {
-    color: '#ffffff',
     fontSize: 16,
     fontWeight: '600',
   },

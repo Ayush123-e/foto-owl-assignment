@@ -1,12 +1,9 @@
 /**
- * AuthContext – global authentication state persisted with AsyncStorage.
+ * AuthContext – global authentication state persisted with our custom storage utility.
  *
  * Storage keys:
- *   @users_list   → JSON array of all registered users (with hashed passwords)
+ *   @users_list   → JSON array of all registered users (with passwords)
  *   @current_user → JSON object of the active session (password stripped)
- *
- * On app launch, `loadSession()` hydrates `currentUser` from `@current_user`.
- * Registration appends to `@users_list`. Login validates against that list.
  */
 
 import React, {
@@ -17,7 +14,8 @@ import React, {
   useMemo,
   useState,
 } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+
+import { storage } from '../utils/storage';
 
 // ---------------------------------------------------------------------------
 // Storage keys
@@ -86,15 +84,12 @@ interface AuthContextValue {
 // ---------------------------------------------------------------------------
 
 async function getUsersList(): Promise<StoredUser[]> {
-  const raw = await AsyncStorage.getItem(STORAGE_KEYS.USERS_LIST);
-  if (!raw) {
-    return [];
-  }
-  return JSON.parse(raw) as StoredUser[];
+  const users = await storage.get<StoredUser[]>(STORAGE_KEYS.USERS_LIST);
+  return users ?? [];
 }
 
 async function saveUsersList(users: StoredUser[]): Promise<void> {
-  await AsyncStorage.setItem(STORAGE_KEYS.USERS_LIST, JSON.stringify(users));
+  await storage.set(STORAGE_KEYS.USERS_LIST, users);
 }
 
 function stripPassword(stored: StoredUser): User {
@@ -124,9 +119,9 @@ export function AuthProvider({ children }: AuthProviderProps): React.JSX.Element
   useEffect(() => {
     (async () => {
       try {
-        const raw = await AsyncStorage.getItem(STORAGE_KEYS.CURRENT_USER);
-        if (raw) {
-          setCurrentUser(JSON.parse(raw) as User);
+        const user = await storage.get<User>(STORAGE_KEYS.CURRENT_USER);
+        if (user) {
+          setCurrentUser(user);
         }
       } catch {
         // Silently ignore corrupt storage.
@@ -163,10 +158,7 @@ export function AuthProvider({ children }: AuthProviderProps): React.JSX.Element
 
     // Auto-login after registration.
     const session = stripPassword(newUser);
-    await AsyncStorage.setItem(
-      STORAGE_KEYS.CURRENT_USER,
-      JSON.stringify(session),
-    );
+    await storage.set(STORAGE_KEYS.CURRENT_USER, session);
     setCurrentUser(session);
   }, []);
 
@@ -186,10 +178,7 @@ export function AuthProvider({ children }: AuthProviderProps): React.JSX.Element
       }
 
       const session = stripPassword(match);
-      await AsyncStorage.setItem(
-        STORAGE_KEYS.CURRENT_USER,
-        JSON.stringify(session),
-      );
+      await storage.set(STORAGE_KEYS.CURRENT_USER, session);
       setCurrentUser(session);
     },
     [],
@@ -197,7 +186,7 @@ export function AuthProvider({ children }: AuthProviderProps): React.JSX.Element
 
   // -- Logout ---------------------------------------------------------------
   const logout = useCallback(async (): Promise<void> => {
-    await AsyncStorage.removeItem(STORAGE_KEYS.CURRENT_USER);
+    await storage.remove(STORAGE_KEYS.CURRENT_USER);
     setCurrentUser(null);
   }, []);
 
@@ -220,10 +209,7 @@ export function AuthProvider({ children }: AuthProviderProps): React.JSX.Element
 
       // 2) Update @current_user session (password stays stripped)
       const updatedSession: User = { ...currentUser, ...updates };
-      await AsyncStorage.setItem(
-        STORAGE_KEYS.CURRENT_USER,
-        JSON.stringify(updatedSession),
-      );
+      await storage.set(STORAGE_KEYS.CURRENT_USER, updatedSession);
       setCurrentUser(updatedSession);
     },
     [currentUser],
@@ -242,10 +228,6 @@ export function AuthProvider({ children }: AuthProviderProps): React.JSX.Element
 // Hook
 // ---------------------------------------------------------------------------
 
-/**
- * Access the global auth state.
- * Must be called inside an `<AuthProvider>`.
- */
 export function useAuth(): AuthContextValue {
   const ctx = useContext(AuthContext);
   if (ctx === undefined) {

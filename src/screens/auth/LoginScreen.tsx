@@ -13,14 +13,16 @@ import {
   Pressable,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
-import type { LoginScreenProps } from '../../navigation/types';
+import { Input } from '../../components/Input';
+import { Button } from '../../components/Button';
+import { validationRules } from '../../utils/validations';
+import type { LoginScreenProps } from '../../navigation/Types';
 
 // ---------------------------------------------------------------------------
 // Form types
@@ -77,90 +79,50 @@ export default function LoginScreen({
         <Text style={[styles.title, { color: colors.text }]}>Welcome Back</Text>
         <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Sign in to continue</Text>
 
-        {/* ── Email ─────────────────────────────────────────────── */}
-        <Text style={[styles.label, { color: colors.text }]}>Email</Text>
+        {/* Email */}
         <Controller
           control={control}
           name="email"
-          rules={{
-            required: 'Email is required',
-            pattern: {
-              value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-              message: 'Enter a valid email address',
-            },
-          }}
+          rules={validationRules.email}
           render={({ field: { onChange, onBlur, value } }) => (
-            <TextInput
-              style={[
-                styles.input,
-                {
-                  backgroundColor: colors.inputBackground,
-                  color: colors.text,
-                  borderColor: errors.email ? colors.error : colors.border,
-                },
-              ]}
+            <Input
+              label="Email"
               placeholder="john@example.com"
-              placeholderTextColor={colors.textSecondary}
-              autoCapitalize="none"
-              keyboardType="email-address"
+              value={value}
               onBlur={onBlur}
               onChangeText={onChange}
-              value={value}
+              error={errors.email?.message}
+              autoCapitalize="none"
+              keyboardType="email-address"
             />
           )}
         />
-        {errors.email && (
-          <Text style={[styles.error, { color: colors.error }]}>{errors.email.message}</Text>
-        )}
 
-        {/* ── Password ──────────────────────────────────────────── */}
-        <Text style={[styles.label, { color: colors.text }]}>Password</Text>
+        {/* Password */}
         <Controller
           control={control}
           name="password"
-          rules={{
-            required: 'Password is required',
-            minLength: {
-              value: 6,
-              message: 'Password must be at least 6 characters',
-            },
-          }}
+          rules={validationRules.password}
           render={({ field: { onChange, onBlur, value } }) => (
-            <TextInput
-              style={[
-                styles.input,
-                {
-                  backgroundColor: colors.inputBackground,
-                  color: colors.text,
-                  borderColor: errors.password ? colors.error : colors.border,
-                },
-              ]}
+            <Input
+              label="Password"
               placeholder="Min 6 characters"
-              placeholderTextColor={colors.textSecondary}
-              secureTextEntry
+              value={value}
               onBlur={onBlur}
               onChangeText={onChange}
-              value={value}
+              error={errors.password?.message}
+              secureTextEntry
             />
           )}
         />
-        {errors.password && (
-          <Text style={[styles.error, { color: colors.error }]}>{errors.password.message}</Text>
-        )}
 
-        {/* ── Submit ────────────────────────────────────────────── */}
-        <Pressable
-          style={[
-            styles.button,
-            { backgroundColor: colors.primary },
-            isSubmitting && styles.buttonDisabled,
-          ]}
+        {/* Submit */}
+        <Button
+          label={isSubmitting ? 'Signing In…' : 'Log In'}
           onPress={handleSubmit(onSubmit)}
-          disabled={isSubmitting}>
-          <Text style={[styles.buttonText, { color: colors.buttonText }]}>
-            {isSubmitting ? 'Signing In…' : 'Log In'}
-          </Text>
-        </Pressable>
+          isLoading={isSubmitting}
+          style={{ marginTop: 12, marginBottom: 18 }}
+        />
 
         <Pressable onPress={() => navigation.navigate('RegisterScreen')}>
           <Text style={[styles.link, { color: colors.textSecondary }]}>
@@ -211,38 +173,6 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 14,
     marginBottom: 24,
-  },
-  label: {
-    fontSize: 13,
-    fontWeight: '600',
-    marginBottom: 6,
-    marginTop: 12,
-  },
-  input: {
-    borderRadius: 10,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    fontSize: 15,
-    borderWidth: 1,
-  },
-  error: {
-    fontSize: 12,
-    marginTop: 4,
-    marginLeft: 4,
-  },
-  button: {
-    borderRadius: 10,
-    paddingVertical: 16,
-    alignItems: 'center',
-    marginTop: 24,
-    marginBottom: 18,
-  },
-  buttonDisabled: {
-    opacity: 0.6,
-  },
-  buttonText: {
-    fontSize: 16,
-    fontWeight: '600',
   },
   link: {
     textAlign: 'center',

@@ -1,8 +1,5 @@
 /**
- * RegisterScreen – comprehensive registration form with themes.
- *
- * Fields: Full Name, Email, Gender (radio), Mobile (10 digits),
- *         Address, City (dropdown), Password (min 6), Confirm Password.
+ * RegisterScreen – comprehensive registration form with themes and Atom components.
  */
 
 import React, { useState } from 'react';
@@ -14,15 +11,17 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
+import { Input } from '../../components/Input';
+import { Button } from '../../components/Button';
+import { validationRules } from '../../utils/validations';
 import type { Gender } from '../../context/AuthContext';
-import type { RegisterScreenProps } from '../../navigation/types';
+import type { RegisterScreenProps } from '../../navigation/Types';
 
 // ---------------------------------------------------------------------------
 // Form types
@@ -128,75 +127,44 @@ export default function RegisterScreen({
         <Text style={[styles.title, { color: colors.text }]}>Create Account</Text>
         <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Fill in your details to get started</Text>
 
-        {/* ── Full Name ─────────────────────────────────────────── */}
-        <Text style={[styles.label, { color: colors.text }]}>Full Name</Text>
+        {/* Full Name */}
         <Controller
           control={control}
           name="fullName"
-          rules={{
-            required: 'Full name is required',
-            minLength: { value: 2, message: 'Must be at least 2 characters' },
-          }}
+          rules={validationRules.fullName}
           render={({ field: { onChange, onBlur, value } }) => (
-            <TextInput
-              style={[
-                styles.input,
-                {
-                  backgroundColor: colors.inputBackground,
-                  color: colors.text,
-                  borderColor: errors.fullName ? colors.error : colors.border,
-                },
-              ]}
+            <Input
+              label="Full Name"
               placeholder="John Doe"
-              placeholderTextColor={colors.textSecondary}
-              autoCapitalize="words"
+              value={value}
               onBlur={onBlur}
               onChangeText={onChange}
-              value={value}
+              error={errors.fullName?.message}
+              autoCapitalize="words"
             />
           )}
         />
-        {errors.fullName && (
-          <Text style={[styles.error, { color: colors.error }]}>{errors.fullName.message}</Text>
-        )}
 
-        {/* ── Email ─────────────────────────────────────────────── */}
-        <Text style={[styles.label, { color: colors.text }]}>Email</Text>
+        {/* Email */}
         <Controller
           control={control}
           name="email"
-          rules={{
-            required: 'Email is required',
-            pattern: {
-              value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-              message: 'Enter a valid email address',
-            },
-          }}
+          rules={validationRules.email}
           render={({ field: { onChange, onBlur, value } }) => (
-            <TextInput
-              style={[
-                styles.input,
-                {
-                  backgroundColor: colors.inputBackground,
-                  color: colors.text,
-                  borderColor: errors.email ? colors.error : colors.border,
-                },
-              ]}
+            <Input
+              label="Email"
               placeholder="john@example.com"
-              placeholderTextColor={colors.textSecondary}
-              autoCapitalize="none"
-              keyboardType="email-address"
+              value={value}
               onBlur={onBlur}
               onChangeText={onChange}
-              value={value}
+              error={errors.email?.message}
+              autoCapitalize="none"
+              keyboardType="email-address"
             />
           )}
         />
-        {errors.email && (
-          <Text style={[styles.error, { color: colors.error }]}>{errors.email.message}</Text>
-        )}
 
-        {/* ── Gender (Radio) ────────────────────────────────────── */}
+        {/* Gender (Radio) */}
         <Text style={[styles.label, { color: colors.text }]}>Gender</Text>
         <Controller
           control={control}
@@ -224,88 +192,56 @@ export default function RegisterScreen({
           )}
         />
         {errors.gender && (
-          <Text style={[styles.error, { color: colors.error }]}>{errors.gender.message}</Text>
+          <Text style={[styles.errorText, { color: colors.error }]}>{errors.gender.message}</Text>
         )}
 
-        {/* ── Mobile ────────────────────────────────────────────── */}
-        <Text style={[styles.label, { color: colors.text }]}>Mobile Number</Text>
+        {/* Mobile */}
         <Controller
           control={control}
           name="mobile"
-          rules={{
-            required: 'Mobile number is required',
-            pattern: {
-              value: /^[0-9]{10}$/,
-              message: 'Must be exactly 10 digits',
-            },
-          }}
+          rules={validationRules.mobile}
           render={({ field: { onChange, onBlur, value } }) => (
-            <TextInput
-              style={[
-                styles.input,
-                {
-                  backgroundColor: colors.inputBackground,
-                  color: colors.text,
-                  borderColor: errors.mobile ? colors.error : colors.border,
-                },
-              ]}
+            <Input
+              label="Mobile Number"
               placeholder="9876543210"
-              placeholderTextColor={colors.textSecondary}
-              keyboardType="number-pad"
-              maxLength={10}
+              value={value}
               onBlur={onBlur}
               onChangeText={onChange}
-              value={value}
+              error={errors.mobile?.message}
+              keyboardType="number-pad"
+              maxLength={10}
             />
           )}
         />
-        {errors.mobile && (
-          <Text style={[styles.error, { color: colors.error }]}>{errors.mobile.message}</Text>
-        )}
 
-        {/* ── Address ───────────────────────────────────────────── */}
-        <Text style={[styles.label, { color: colors.text }]}>Address</Text>
+        {/* Address */}
         <Controller
           control={control}
           name="address"
-          rules={{ required: 'Address is required' }}
+          rules={validationRules.address}
           render={({ field: { onChange, onBlur, value } }) => (
-            <TextInput
-              style={[
-                styles.input,
-                styles.textArea,
-                {
-                  backgroundColor: colors.inputBackground,
-                  color: colors.text,
-                  borderColor: errors.address ? colors.error : colors.border,
-                },
-              ]}
+            <Input
+              label="Address"
               placeholder="123, Main Street, Area"
-              placeholderTextColor={colors.textSecondary}
-              multiline
-              numberOfLines={3}
-              textAlignVertical="top"
+              value={value}
               onBlur={onBlur}
               onChangeText={onChange}
-              value={value}
+              error={errors.address?.message}
+              isTextArea
             />
           )}
         />
-        {errors.address && (
-          <Text style={[styles.error, { color: colors.error }]}>{errors.address.message}</Text>
-        )}
 
-        {/* ── City (Dropdown) ───────────────────────────────────── */}
+        {/* City (Dropdown) */}
         <Text style={[styles.label, { color: colors.text }]}>City</Text>
         <Controller
           control={control}
           name="city"
-          rules={{ required: 'Please select a city' }}
+          rules={validationRules.city}
           render={({ field: { onChange, value } }) => (
-            <View>
+            <View style={{ marginBottom: 12 }}>
               <Pressable
                 style={[
-                  styles.input,
                   styles.dropdown,
                   {
                     backgroundColor: colors.inputBackground,
@@ -350,46 +286,28 @@ export default function RegisterScreen({
           )}
         />
         {errors.city && (
-          <Text style={[styles.error, { color: colors.error }]}>{errors.city.message}</Text>
+          <Text style={[styles.errorText, { color: colors.error }]}>{errors.city.message}</Text>
         )}
 
-        {/* ── Password ──────────────────────────────────────────── */}
-        <Text style={[styles.label, { color: colors.text }]}>Password</Text>
+        {/* Password */}
         <Controller
           control={control}
           name="password"
-          rules={{
-            required: 'Password is required',
-            minLength: {
-              value: 6,
-              message: 'Password must be at least 6 characters',
-            },
-          }}
+          rules={validationRules.password}
           render={({ field: { onChange, onBlur, value } }) => (
-            <TextInput
-              style={[
-                styles.input,
-                {
-                  backgroundColor: colors.inputBackground,
-                  color: colors.text,
-                  borderColor: errors.password ? colors.error : colors.border,
-                },
-              ]}
+            <Input
+              label="Password"
               placeholder="Min 6 characters"
-              placeholderTextColor={colors.textSecondary}
-              secureTextEntry
+              value={value}
               onBlur={onBlur}
               onChangeText={onChange}
-              value={value}
+              error={errors.password?.message}
+              secureTextEntry
             />
           )}
         />
-        {errors.password && (
-          <Text style={[styles.error, { color: colors.error }]}>{errors.password.message}</Text>
-        )}
 
-        {/* ── Confirm Password ──────────────────────────────────── */}
-        <Text style={[styles.label, { color: colors.text }]}>Confirm Password</Text>
+        {/* Confirm Password */}
         <Controller
           control={control}
           name="confirmPassword"
@@ -399,41 +317,25 @@ export default function RegisterScreen({
               val === passwordValue || 'Passwords do not match',
           }}
           render={({ field: { onChange, onBlur, value } }) => (
-            <TextInput
-              style={[
-                styles.input,
-                {
-                  backgroundColor: colors.inputBackground,
-                  color: colors.text,
-                  borderColor: errors.confirmPassword ? colors.error : colors.border,
-                },
-              ]}
+            <Input
+              label="Confirm Password"
               placeholder="Re-enter password"
-              placeholderTextColor={colors.textSecondary}
-              secureTextEntry
+              value={value}
               onBlur={onBlur}
               onChangeText={onChange}
-              value={value}
+              error={errors.confirmPassword?.message}
+              secureTextEntry
             />
           )}
         />
-        {errors.confirmPassword && (
-          <Text style={[styles.error, { color: colors.error }]}>{errors.confirmPassword.message}</Text>
-        )}
 
-        {/* ── Submit ────────────────────────────────────────────── */}
-        <Pressable
-          style={[
-            styles.button,
-            { backgroundColor: colors.primary },
-            isSubmitting && styles.buttonDisabled,
-          ]}
+        {/* Submit */}
+        <Button
+          label={isSubmitting ? 'Creating Account…' : 'Register'}
           onPress={handleSubmit(onSubmit)}
-          disabled={isSubmitting}>
-          <Text style={[styles.buttonText, { color: colors.buttonText }]}>
-            {isSubmitting ? 'Creating Account…' : 'Register'}
-          </Text>
-        </Pressable>
+          isLoading={isSubmitting}
+          style={{ marginTop: 24, marginBottom: 18 }}
+        />
 
         <Pressable onPress={() => navigation.navigate('LoginScreen')}>
           <Text style={[styles.link, { color: colors.textSecondary }]}>
@@ -490,24 +392,11 @@ const styles = StyleSheet.create({
     marginBottom: 6,
     marginTop: 14,
   },
-  input: {
-    borderRadius: 10,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    fontSize: 15,
-    borderWidth: 1,
-  },
-  textArea: {
-    minHeight: 80,
-    paddingTop: 14,
-  },
-  error: {
+  errorText: {
     fontSize: 12,
     marginTop: 4,
     marginLeft: 4,
   },
-
-  // Radio buttons
   radioGroup: {
     flexDirection: 'row',
     gap: 20,
@@ -534,12 +423,14 @@ const styles = StyleSheet.create({
   radioLabel: {
     fontSize: 14,
   },
-
-  // City dropdown
   dropdown: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
   },
   dropdownArrow: {
     fontSize: 12,
@@ -558,22 +449,6 @@ const styles = StyleSheet.create({
   },
   dropdownItemText: {
     fontSize: 14,
-  },
-
-  // Button
-  button: {
-    borderRadius: 10,
-    paddingVertical: 16,
-    alignItems: 'center',
-    marginTop: 28,
-    marginBottom: 18,
-  },
-  buttonDisabled: {
-    opacity: 0.6,
-  },
-  buttonText: {
-    fontSize: 16,
-    fontWeight: '600',
   },
   link: {
     textAlign: 'center',

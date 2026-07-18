@@ -16,7 +16,7 @@ import {
 import { useGallery } from '../../context/GalleryContext';
 import { useTheme } from '../../context/ThemeContext';
 import type { PicsumImage } from '../../types/picsum';
-import type { FavoritesScreenProps } from '../../navigation/types';
+import type { FavoritesScreenProps } from '../../navigation/Types';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const COLUMN_GAP = 10;
@@ -98,10 +98,6 @@ export default function FavoritesScreen(
   );
 }
 
-// ---------------------------------------------------------------------------
-// Styles
-// ---------------------------------------------------------------------------
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -120,8 +116,6 @@ const styles = StyleSheet.create({
     gap: COLUMN_GAP,
     marginBottom: COLUMN_GAP,
   },
-
-  // Tile
   tile: {
     width: TILE_WIDTH,
     borderRadius: 12,
@@ -152,8 +146,6 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     padding: 10,
   },
-
-  // Empty
   emptyContainer: {
     alignItems: 'center',
     justifyContent: 'center',
