@@ -1,25 +1,27 @@
 /**
  * App entry point.
  *
- * Wraps the navigation tree with the AuthProvider so that
- * AppNavigator can read the global session state from AsyncStorage.
+ * Wraps the navigation tree with the AuthProvider, GalleryProvider,
+ * and ThemeProvider so that all components have access to global states.
  */
 
 import React from 'react';
-import { ActivityIndicator, StatusBar, StyleSheet, View, useColorScheme } from 'react-native';
+import { ActivityIndicator, StatusBar, StyleSheet, View } from 'react-native';
 
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { GalleryProvider } from './context/GalleryContext';
+import { ThemeProvider, useTheme } from './context/ThemeContext';
 import { Toast } from './components/Toast';
 import AppNavigator from './navigation/AppNavigator';
 
 function AppContent(): React.JSX.Element {
   const { isLoading } = useAuth();
+  const { colors } = useTheme();
 
   if (isLoading) {
     return (
-      <View style={styles.loader}>
-        <ActivityIndicator size="large" color="#6c63ff" />
+      <View style={[styles.loader, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
@@ -28,23 +30,35 @@ function AppContent(): React.JSX.Element {
 }
 
 export default function App(): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-
   return (
     <AuthProvider>
       <GalleryProvider>
-        <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-        <AppContent />
-        <Toast />
+        <ThemeProvider>
+          <AppWithTheme />
+        </ThemeProvider>
       </GalleryProvider>
     </AuthProvider>
+  );
+}
+
+function AppWithTheme(): React.JSX.Element {
+  const { colors } = useTheme();
+
+  return (
+    <>
+      <StatusBar
+        barStyle={colors.statusBar}
+        backgroundColor={colors.background}
+      />
+      <AppContent />
+      <Toast />
+    </>
   );
 }
 
 const styles = StyleSheet.create({
   loader: {
     flex: 1,
-    backgroundColor: '#0f0f1a',
     justifyContent: 'center',
     alignItems: 'center',
   },

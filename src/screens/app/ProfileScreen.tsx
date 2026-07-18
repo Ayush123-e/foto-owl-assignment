@@ -1,9 +1,7 @@
 /**
- * ProfileScreen – displays the current user's profile.
+ * ProfileScreen – displays the current user's profile with themes.
  *
- * Features a toggleable "Edit Mode" where all fields become editable
- * TextInputs. Saving immediately syncs changes back to the global
- * auth state AND AsyncStorage without requiring an app restart.
+ * Features a toggleable "Edit Mode" and theme switcher.
  */
 
 import React, { useEffect, useState } from 'react';
@@ -21,6 +19,7 @@ import {
 import { useForm, Controller } from 'react-hook-form';
 
 import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
 import type { Gender, ProfileUpdate } from '../../context/AuthContext';
 import type { ProfileScreenProps } from '../../navigation/types';
 
@@ -51,6 +50,7 @@ export default function ProfileScreen(
   _props: ProfileScreenProps,
 ): React.JSX.Element {
   const { currentUser, logout, updateProfile } = useAuth();
+  const { colors, toggleTheme, isDark } = useTheme();
   const [isEditing, setIsEditing] = useState(false);
   const [cityDropdownOpen, setCityDropdownOpen] = useState(false);
 
@@ -105,7 +105,6 @@ export default function ProfileScreen(
   };
 
   const handleCancel = (): void => {
-    // Reset form back to current user values.
     if (currentUser) {
       reset({
         fullName: currentUser.fullName,
@@ -122,31 +121,40 @@ export default function ProfileScreen(
 
   if (!currentUser) {
     return (
-      <View style={styles.container}>
-        <Text style={styles.emptyText}>No user session found.</Text>
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <Text style={[styles.emptyText, { color: colors.textSecondary }]}>No user session found.</Text>
       </View>
     );
   }
 
   return (
     <KeyboardAvoidingView
-      style={styles.container}
+      style={[styles.container, { backgroundColor: colors.background }]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView
         contentContainerStyle={styles.scroll}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}>
-        {/* ── Avatar ──────────────────────────────────────────── */}
+        {/* ── Avatar & Quick Settings ─────────────────────────── */}
         <View style={styles.avatarRow}>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>
+          <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
+            <Text style={[styles.avatarText, { color: colors.buttonText }]}>
               {currentUser.fullName.charAt(0).toUpperCase()}
             </Text>
           </View>
           <View style={styles.avatarMeta}>
-            <Text style={styles.avatarName}>{currentUser.fullName}</Text>
-            <Text style={styles.avatarEmail}>{currentUser.email}</Text>
+            <Text style={[styles.avatarName, { color: colors.text }]}>{currentUser.fullName}</Text>
+            <Text style={[styles.avatarEmail, { color: colors.textSecondary }]}>{currentUser.email}</Text>
           </View>
+          {/* Quick theme toggle */}
+          <Pressable
+            style={[styles.themeToggle, { backgroundColor: colors.card, borderColor: colors.border }]}
+            onPress={toggleTheme}
+            hitSlop={8}>
+            <Text style={{ fontSize: 18, color: colors.text }}>
+              {isDark ? '☀️' : '🌙'}
+            </Text>
+          </Pressable>
         </View>
 
         {/* ── Edit / Cancel toggle ────────────────────────────── */}
@@ -154,30 +162,30 @@ export default function ProfileScreen(
           {isEditing ? (
             <>
               <Pressable
-                style={[styles.actionBtn, styles.cancelBtn]}
+                style={[styles.actionBtn, styles.cancelBtn, { backgroundColor: colors.inputBackground }]}
                 onPress={handleCancel}>
-                <Text style={styles.cancelBtnText}>Cancel</Text>
+                <Text style={[styles.cancelBtnText, { color: colors.textSecondary }]}>Cancel</Text>
               </Pressable>
               <Pressable
-                style={[styles.actionBtn, styles.saveBtn, isSubmitting && styles.disabledBtn]}
+                style={[styles.actionBtn, styles.saveBtn, { backgroundColor: colors.success }, isSubmitting && styles.disabledBtn]}
                 onPress={handleSubmit(onSave)}
                 disabled={isSubmitting}>
-                <Text style={styles.saveBtnText}>
+                <Text style={[styles.saveBtnText, { color: colors.buttonText }]}>
                   {isSubmitting ? 'Saving…' : 'Save'}
                 </Text>
               </Pressable>
             </>
           ) : (
             <Pressable
-              style={[styles.actionBtn, styles.editBtn]}
+              style={[styles.actionBtn, styles.editBtn, { backgroundColor: colors.primary }]}
               onPress={() => setIsEditing(true)}>
-              <Text style={styles.editBtnText}>✎  Edit Profile</Text>
+              <Text style={[styles.editBtnText, { color: colors.buttonText }]}>✎  Edit Profile</Text>
             </Pressable>
           )}
         </View>
 
         {/* ── Full Name ───────────────────────────────────────── */}
-        <Text style={styles.label}>Full Name</Text>
+        <Text style={[styles.label, { color: colors.textSecondary }]}>Full Name</Text>
         {isEditing ? (
           <>
             <Controller
@@ -189,7 +197,14 @@ export default function ProfileScreen(
               }}
               render={({ field: { onChange, onBlur, value } }) => (
                 <TextInput
-                  style={[styles.input, errors.fullName && styles.inputError]}
+                  style={[
+                    styles.input,
+                    {
+                      backgroundColor: colors.inputBackground,
+                      color: colors.text,
+                      borderColor: errors.fullName ? colors.error : colors.border,
+                    },
+                  ]}
                   autoCapitalize="words"
                   onBlur={onBlur}
                   onChangeText={onChange}
@@ -198,15 +213,15 @@ export default function ProfileScreen(
               )}
             />
             {errors.fullName && (
-              <Text style={styles.error}>{errors.fullName.message}</Text>
+              <Text style={[styles.error, { color: colors.error }]}>{errors.fullName.message}</Text>
             )}
           </>
         ) : (
-          <Text style={styles.readonlyValue}>{currentUser.fullName}</Text>
+          <Text style={[styles.readonlyValue, { color: colors.text }]}>{currentUser.fullName}</Text>
         )}
 
         {/* ── Email ───────────────────────────────────────────── */}
-        <Text style={styles.label}>Email</Text>
+        <Text style={[styles.label, { color: colors.textSecondary }]}>Email</Text>
         {isEditing ? (
           <>
             <Controller
@@ -221,7 +236,14 @@ export default function ProfileScreen(
               }}
               render={({ field: { onChange, onBlur, value } }) => (
                 <TextInput
-                  style={[styles.input, errors.email && styles.inputError]}
+                  style={[
+                    styles.input,
+                    {
+                      backgroundColor: colors.inputBackground,
+                      color: colors.text,
+                      borderColor: errors.email ? colors.error : colors.border,
+                    },
+                  ]}
                   autoCapitalize="none"
                   keyboardType="email-address"
                   onBlur={onBlur}
@@ -231,15 +253,15 @@ export default function ProfileScreen(
               )}
             />
             {errors.email && (
-              <Text style={styles.error}>{errors.email.message}</Text>
+              <Text style={[styles.error, { color: colors.error }]}>{errors.email.message}</Text>
             )}
           </>
         ) : (
-          <Text style={styles.readonlyValue}>{currentUser.email}</Text>
+          <Text style={[styles.readonlyValue, { color: colors.text }]}>{currentUser.email}</Text>
         )}
 
         {/* ── Gender ──────────────────────────────────────────── */}
-        <Text style={styles.label}>Gender</Text>
+        <Text style={[styles.label, { color: colors.textSecondary }]}>Gender</Text>
         {isEditing ? (
           <Controller
             control={control}
@@ -255,22 +277,23 @@ export default function ProfileScreen(
                     <View
                       style={[
                         styles.radioOuter,
-                        value === option && styles.radioOuterActive,
+                        { borderColor: colors.border },
+                        value === option && { borderColor: colors.primary },
                       ]}>
-                      {value === option && <View style={styles.radioInner} />}
+                      {value === option && <View style={[styles.radioInner, { backgroundColor: colors.primary }]} />}
                     </View>
-                    <Text style={styles.radioLabel}>{option}</Text>
+                    <Text style={[styles.radioLabel, { color: colors.text }]}>{option}</Text>
                   </Pressable>
                 ))}
               </View>
             )}
           />
         ) : (
-          <Text style={styles.readonlyValue}>{currentUser.gender}</Text>
+          <Text style={[styles.readonlyValue, { color: colors.text }]}>{currentUser.gender}</Text>
         )}
 
         {/* ── Mobile ──────────────────────────────────────────── */}
-        <Text style={styles.label}>Mobile</Text>
+        <Text style={[styles.label, { color: colors.textSecondary }]}>Mobile</Text>
         {isEditing ? (
           <>
             <Controller
@@ -285,7 +308,14 @@ export default function ProfileScreen(
               }}
               render={({ field: { onChange, onBlur, value } }) => (
                 <TextInput
-                  style={[styles.input, errors.mobile && styles.inputError]}
+                  style={[
+                    styles.input,
+                    {
+                      backgroundColor: colors.inputBackground,
+                      color: colors.text,
+                      borderColor: errors.mobile ? colors.error : colors.border,
+                    },
+                  ]}
                   keyboardType="number-pad"
                   maxLength={10}
                   onBlur={onBlur}
@@ -295,15 +325,15 @@ export default function ProfileScreen(
               )}
             />
             {errors.mobile && (
-              <Text style={styles.error}>{errors.mobile.message}</Text>
+              <Text style={[styles.error, { color: colors.error }]}>{errors.mobile.message}</Text>
             )}
           </>
         ) : (
-          <Text style={styles.readonlyValue}>{currentUser.mobile}</Text>
+          <Text style={[styles.readonlyValue, { color: colors.text }]}>{currentUser.mobile}</Text>
         )}
 
         {/* ── Address ─────────────────────────────────────────── */}
-        <Text style={styles.label}>Address</Text>
+        <Text style={[styles.label, { color: colors.textSecondary }]}>Address</Text>
         {isEditing ? (
           <>
             <Controller
@@ -315,7 +345,11 @@ export default function ProfileScreen(
                   style={[
                     styles.input,
                     styles.textArea,
-                    errors.address && styles.inputError,
+                    {
+                      backgroundColor: colors.inputBackground,
+                      color: colors.text,
+                      borderColor: errors.address ? colors.error : colors.border,
+                    },
                   ]}
                   multiline
                   numberOfLines={3}
@@ -327,15 +361,15 @@ export default function ProfileScreen(
               )}
             />
             {errors.address && (
-              <Text style={styles.error}>{errors.address.message}</Text>
+              <Text style={[styles.error, { color: colors.error }]}>{errors.address.message}</Text>
             )}
           </>
         ) : (
-          <Text style={styles.readonlyValue}>{currentUser.address}</Text>
+          <Text style={[styles.readonlyValue, { color: colors.text }]}>{currentUser.address}</Text>
         )}
 
         {/* ── City ────────────────────────────────────────────── */}
-        <Text style={styles.label}>City</Text>
+        <Text style={[styles.label, { color: colors.textSecondary }]}>City</Text>
         {isEditing ? (
           <Controller
             control={control}
@@ -347,27 +381,28 @@ export default function ProfileScreen(
                   style={[
                     styles.input,
                     styles.dropdown,
-                    errors.city && styles.inputError,
+                    {
+                      backgroundColor: colors.inputBackground,
+                      borderColor: errors.city ? colors.error : colors.border,
+                    },
                   ]}
                   onPress={() => setCityDropdownOpen(prev => !prev)}>
-                  <Text
-                    style={
-                      value ? styles.dropdownText : styles.dropdownPlaceholder
-                    }>
+                  <Text style={value ? { color: colors.text } : { color: colors.textSecondary }}>
                     {value || 'Select a city'}
                   </Text>
-                  <Text style={styles.dropdownArrow}>
+                  <Text style={[styles.dropdownArrow, { color: colors.textSecondary }]}>
                     {cityDropdownOpen ? '▲' : '▼'}
                   </Text>
                 </Pressable>
                 {cityDropdownOpen && (
-                  <View style={styles.dropdownList}>
+                  <View style={[styles.dropdownList, { backgroundColor: colors.card, borderColor: colors.border }]}>
                     {CITY_OPTIONS.map(city => (
                       <Pressable
                         key={city}
                         style={[
                           styles.dropdownItem,
-                          value === city && styles.dropdownItemActive,
+                          { borderBottomColor: colors.border },
+                          value === city && { backgroundColor: `${colors.primary}20` },
                         ]}
                         onPress={() => {
                           onChange(city);
@@ -376,7 +411,8 @@ export default function ProfileScreen(
                         <Text
                           style={[
                             styles.dropdownItemText,
-                            value === city && styles.dropdownItemTextActive,
+                            { color: colors.text },
+                            value === city && { color: colors.primary, fontWeight: '600' },
                           ]}>
                           {city}
                         </Text>
@@ -388,7 +424,7 @@ export default function ProfileScreen(
             )}
           />
         ) : (
-          <Text style={styles.readonlyValue}>{currentUser.city}</Text>
+          <Text style={[styles.readonlyValue, { color: colors.text }]}>{currentUser.city}</Text>
         )}
 
         {/* ── Logout ──────────────────────────────────────────── */}
@@ -407,7 +443,6 @@ export default function ProfileScreen(
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0f0f1a',
   },
   scroll: {
     paddingHorizontal: 24,
@@ -415,7 +450,6 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   emptyText: {
-    color: '#9ca3af',
     fontSize: 16,
     textAlign: 'center',
     marginTop: 60,
@@ -432,14 +466,12 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: '#6c63ff',
     justifyContent: 'center',
     alignItems: 'center',
   },
   avatarText: {
     fontSize: 28,
     fontWeight: '700',
-    color: '#ffffff',
   },
   avatarMeta: {
     flex: 1,
@@ -447,12 +479,18 @@ const styles = StyleSheet.create({
   avatarName: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#ffffff',
   },
   avatarEmail: {
     fontSize: 13,
-    color: '#9ca3af',
     marginTop: 2,
+  },
+  themeToggle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
   },
 
   // Action buttons row
@@ -468,26 +506,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   editBtn: {
-    backgroundColor: '#6c63ff',
+    // colors.primary applied dynamically
   },
   editBtnText: {
-    color: '#ffffff',
     fontSize: 15,
     fontWeight: '600',
   },
   cancelBtn: {
-    backgroundColor: '#16213e',
+    // colors.inputBackground applied dynamically
   },
   cancelBtnText: {
-    color: '#9ca3af',
     fontSize: 15,
     fontWeight: '600',
   },
   saveBtn: {
-    backgroundColor: '#22c55e',
+    // colors.success applied dynamically
   },
   saveBtnText: {
-    color: '#ffffff',
     fontSize: 15,
     fontWeight: '600',
   },
@@ -499,37 +534,28 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#6b7280',
     marginBottom: 6,
     marginTop: 16,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   readonlyValue: {
-    color: '#ffffff',
     fontSize: 16,
     paddingVertical: 8,
     paddingHorizontal: 4,
   },
   input: {
-    backgroundColor: '#16213e',
     borderRadius: 10,
     paddingHorizontal: 16,
     paddingVertical: 14,
-    color: '#ffffff',
     fontSize: 15,
     borderWidth: 1,
-    borderColor: '#16213e',
-  },
-  inputError: {
-    borderColor: '#ef4444',
   },
   textArea: {
     minHeight: 80,
     paddingTop: 14,
   },
   error: {
-    color: '#ef4444',
     fontSize: 12,
     marginTop: 4,
     marginLeft: 4,
@@ -551,21 +577,15 @@ const styles = StyleSheet.create({
     height: 22,
     borderRadius: 11,
     borderWidth: 2,
-    borderColor: '#4b5563',
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  radioOuterActive: {
-    borderColor: '#6c63ff',
   },
   radioInner: {
     width: 12,
     height: 12,
     borderRadius: 6,
-    backgroundColor: '#6c63ff',
   },
   radioLabel: {
-    color: '#d1d5db',
     fontSize: 14,
   },
 
@@ -574,42 +594,25 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-  },
-  dropdownText: {
-    color: '#ffffff',
-    fontSize: 15,
-  },
-  dropdownPlaceholder: {
-    color: '#555',
-    fontSize: 15,
+    borderWidth: 1,
   },
   dropdownArrow: {
-    color: '#9ca3af',
     fontSize: 12,
   },
   dropdownList: {
-    backgroundColor: '#16213e',
     borderRadius: 10,
     marginTop: 4,
     maxHeight: 200,
     overflow: 'hidden',
+    borderWidth: 1,
   },
   dropdownItem: {
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#1a1a2e',
-  },
-  dropdownItemActive: {
-    backgroundColor: '#6c63ff20',
   },
   dropdownItemText: {
-    color: '#d1d5db',
     fontSize: 14,
-  },
-  dropdownItemTextActive: {
-    color: '#6c63ff',
-    fontWeight: '600',
   },
 
   // Logout

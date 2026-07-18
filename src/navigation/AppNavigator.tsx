@@ -19,11 +19,13 @@
  */
 
 import React from 'react';
+import { Text } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 
 // Screens – Auth
 import LoginScreen from '../screens/auth/LoginScreen';
@@ -74,22 +76,25 @@ function AuthStack(): React.JSX.Element {
 // ---------------------------------------------------------------------------
 
 function HomeStack(): React.JSX.Element {
+  const { colors } = useTheme();
+
   return (
     <HomeStackNav.Navigator
       screenOptions={{
-        headerStyle: { backgroundColor: '#0f0f1a' },
-        headerTintColor: '#ffffff',
+        headerStyle: { backgroundColor: colors.background },
+        headerTintColor: colors.text,
         headerTitleStyle: { fontWeight: '600' },
+        headerShadowVisible: false,
       }}>
       <HomeStackNav.Screen
         name="HomeScreen"
         component={HomeScreen}
-        options={{ title: 'Home' }}
+        options={{ title: 'Explore' }}
       />
       <HomeStackNav.Screen
         name="DetailScreen"
         component={DetailScreen}
-        options={{ title: 'Detail' }}
+        options={{ title: 'Details' }}
       />
     </HomeStackNav.Navigator>
   );
@@ -100,19 +105,21 @@ function HomeStack(): React.JSX.Element {
 // ---------------------------------------------------------------------------
 
 function AppTabs(): React.JSX.Element {
+  const { colors } = useTheme();
+
   return (
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: '#1a1a2e',
-          borderTopColor: '#16213e',
+          backgroundColor: colors.tabBarBackground,
+          borderTopColor: colors.border,
           height: 60,
           paddingBottom: 8,
           paddingTop: 6,
         },
-        tabBarActiveTintColor: '#6c63ff',
-        tabBarInactiveTintColor: '#9ca3af',
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.textSecondary,
         tabBarLabelStyle: {
           fontSize: 12,
           fontWeight: '600',
@@ -133,8 +140,9 @@ function AppTabs(): React.JSX.Element {
         component={FavoritesScreen}
         options={{
           headerShown: true,
-          headerStyle: { backgroundColor: '#0f0f1a' },
-          headerTintColor: '#ffffff',
+          headerStyle: { backgroundColor: colors.background },
+          headerTintColor: colors.text,
+          headerShadowVisible: false,
           title: 'Favorites',
           tabBarLabel: 'Favorites',
           tabBarIcon: ({ color }: { color: string }) => (
@@ -147,8 +155,9 @@ function AppTabs(): React.JSX.Element {
         component={ProfileScreen}
         options={{
           headerShown: true,
-          headerStyle: { backgroundColor: '#0f0f1a' },
-          headerTintColor: '#ffffff',
+          headerStyle: { backgroundColor: colors.background },
+          headerTintColor: colors.text,
+          headerShadowVisible: false,
           title: 'Profile',
           tabBarLabel: 'Profile',
           tabBarIcon: ({ color }: { color: string }) => (
@@ -161,10 +170,8 @@ function AppTabs(): React.JSX.Element {
 }
 
 // ---------------------------------------------------------------------------
-// Tiny text-based tab icon (avoids external icon library dependency)
+// Tiny text-based tab icon
 // ---------------------------------------------------------------------------
-
-import { Text } from 'react-native';
 
 function TabIcon({ label, color }: { label: string; color: string }): React.JSX.Element {
   return <Text style={{ fontSize: 20, color }}>{label}</Text>;

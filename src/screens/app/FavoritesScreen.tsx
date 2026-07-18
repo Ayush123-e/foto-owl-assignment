@@ -1,6 +1,5 @@
 /**
- * FavoritesScreen – displays all images the user has favorited.
- * Reads from GalleryContext and renders a grid of favorited images.
+ * FavoritesScreen – displays all images the user has favorited with themes.
  */
 
 import React, { useCallback, useMemo } from 'react';
@@ -15,6 +14,7 @@ import {
 } from 'react-native';
 
 import { useGallery } from '../../context/GalleryContext';
+import { useTheme } from '../../context/ThemeContext';
 import type { PicsumImage } from '../../types/picsum';
 import type { FavoritesScreenProps } from '../../navigation/types';
 
@@ -27,6 +27,7 @@ export default function FavoritesScreen(
   _props: FavoritesScreenProps,
 ): React.JSX.Element {
   const { favorites, toggleFavorite } = useGallery();
+  const { colors } = useTheme();
 
   const favoritesList = useMemo<PicsumImage[]>(
     () => Object.values(favorites),
@@ -40,10 +41,10 @@ export default function FavoritesScreen(
       )}/${Math.round(TILE_WIDTH)}`;
 
       return (
-        <View style={styles.tile}>
+        <View style={[styles.tile, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <Image
             source={{ uri: thumbnailUrl }}
-            style={styles.tileImage}
+            style={[styles.tileImage, { backgroundColor: colors.inputBackground }]}
             resizeMode="cover"
           />
           <Pressable
@@ -52,13 +53,13 @@ export default function FavoritesScreen(
             hitSlop={6}>
             <Text style={styles.removeBtnText}>♥</Text>
           </Pressable>
-          <Text style={styles.tileAuthor} numberOfLines={1}>
+          <Text style={[styles.tileAuthor, { color: colors.text }]} numberOfLines={1}>
             {item.author}
           </Text>
         </View>
       );
     },
-    [toggleFavorite],
+    [toggleFavorite, colors],
   );
 
   const keyExtractor = useCallback(
@@ -69,17 +70,17 @@ export default function FavoritesScreen(
   const renderEmpty = (): React.JSX.Element => (
     <View style={styles.emptyContainer}>
       <Text style={styles.emptyIcon}>♡</Text>
-      <Text style={styles.emptyTitle}>No favorites yet</Text>
-      <Text style={styles.emptySubtitle}>
+      <Text style={[styles.emptyTitle, { color: colors.text }]}>No favorites yet</Text>
+      <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>
         Tap the heart icon on any image to save it here.
       </Text>
     </View>
   );
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       {favoritesList.length > 0 && (
-        <Text style={styles.count}>
+        <Text style={[styles.count, { color: colors.textSecondary }]}>
           {favoritesList.length} favorite{favoritesList.length !== 1 ? 's' : ''}
         </Text>
       )}
@@ -104,10 +105,8 @@ export default function FavoritesScreen(
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0f0f1a',
   },
   count: {
-    color: '#6b7280',
     fontSize: 12,
     paddingHorizontal: 20,
     marginTop: 12,
@@ -125,14 +124,13 @@ const styles = StyleSheet.create({
   // Tile
   tile: {
     width: TILE_WIDTH,
-    backgroundColor: '#1a1a2e',
     borderRadius: 12,
     overflow: 'hidden',
+    borderWidth: 1,
   },
   tileImage: {
     width: '100%',
     height: TILE_WIDTH,
-    backgroundColor: '#16213e',
   },
   removeBtn: {
     position: 'absolute',
@@ -150,7 +148,6 @@ const styles = StyleSheet.create({
     color: '#ef4444',
   },
   tileAuthor: {
-    color: '#ffffff',
     fontSize: 13,
     fontWeight: '500',
     padding: 10,
@@ -168,13 +165,11 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   emptyTitle: {
-    color: '#ffffff',
     fontSize: 18,
     fontWeight: '600',
     marginBottom: 6,
   },
   emptySubtitle: {
-    color: '#9ca3af',
     fontSize: 14,
     textAlign: 'center',
     paddingHorizontal: 40,

@@ -1,12 +1,5 @@
 /**
- * DetailScreen – full-screen image viewer with Download & Share.
- *
- * Features:
- * - High-resolution image display from download_url
- * - Download to device gallery (expo-file-system + expo-media-library)
- * - Share image URL via React Native Share API
- * - Favorite toggle via GalleryContext
- * - Image metadata display (author, dimensions, URLs)
+ * DetailScreen – full-screen image viewer with Download & Share and themes.
  */
 
 import React, { useCallback, useState } from 'react';
@@ -25,6 +18,7 @@ import {
 } from 'react-native';
 
 import { useGallery } from '../../context/GalleryContext';
+import { useTheme } from '../../context/ThemeContext';
 import { downloadImageToGallery } from '../../utils/imageDownloader';
 import { showToast } from '../../components/Toast';
 import type { DetailScreenProps } from '../../navigation/types';
@@ -41,6 +35,7 @@ export default function DetailScreen({
 }: DetailScreenProps): React.JSX.Element {
   const { itemId, image } = route.params;
   const { isFavorite, toggleFavorite } = useGallery();
+  const { colors, isDark } = useTheme();
 
   const [isFullScreen, setIsFullScreen] = useState<boolean>(false);
   const [isDownloading, setIsDownloading] = useState<boolean>(false);
@@ -76,7 +71,7 @@ export default function DetailScreen({
         message: image
           ? `Check out this photo by ${image.author}!\n\n${shareUrl}`
           : `Check out this photo!\n\n${shareUrl}`,
-        url: shareUrl, // iOS uses this field.
+        url: shareUrl,
       });
     } catch {
       showToast('Share cancelled or failed.');
@@ -137,7 +132,7 @@ export default function DetailScreen({
   // -- Main render ──────────────────────────────────────────────
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <ScrollView
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}>
@@ -146,9 +141,9 @@ export default function DetailScreen({
           style={styles.imageWrapper}
           onPress={() => setIsFullScreen(true)}>
           {!imageLoaded && (
-            <View style={styles.imagePlaceholder}>
-              <ActivityIndicator size="large" color="#6c63ff" />
-              <Text style={styles.loadingText}>Loading high-res…</Text>
+            <View style={[styles.imagePlaceholder, { backgroundColor: colors.inputBackground }]}>
+              <ActivityIndicator size="large" color={colors.primary} />
+              <Text style={[styles.loadingText, { color: colors.textSecondary }]}>Loading high-res…</Text>
             </View>
           )}
           <Image
@@ -169,16 +164,17 @@ export default function DetailScreen({
           {/* Favorite */}
           {image && (
             <Pressable
-              style={styles.actionBtn}
+              style={[styles.actionBtn, { backgroundColor: colors.card }]}
               onPress={() => toggleFavorite(image)}>
               <Text
                 style={[
                   styles.actionIcon,
+                  { color: colors.textSecondary },
                   favorited && styles.heartActive,
                 ]}>
                 {favorited ? '♥' : '♡'}
               </Text>
-              <Text style={styles.actionLabel}>
+              <Text style={[styles.actionLabel, { color: colors.text }]}>
                 {favorited ? 'Saved' : 'Save'}
               </Text>
             </Pressable>
@@ -186,62 +182,62 @@ export default function DetailScreen({
 
           {/* Download */}
           <Pressable
-            style={[styles.actionBtn, styles.downloadBtn]}
+            style={[styles.actionBtn, styles.downloadBtn, { backgroundColor: colors.primary }]}
             onPress={handleDownload}
             disabled={isDownloading}>
             {isDownloading ? (
-              <ActivityIndicator size="small" color="#ffffff" />
+              <ActivityIndicator size="small" color={colors.buttonText} />
             ) : (
-              <Text style={styles.actionIcon}>⤓</Text>
+              <Text style={[styles.actionIcon, { color: colors.buttonText }]}>⤓</Text>
             )}
-            <Text style={styles.actionLabel}>
+            <Text style={[styles.actionLabel, { color: colors.buttonText }]}>
               {isDownloading ? 'Saving…' : 'Download'}
             </Text>
           </Pressable>
 
           {/* Share */}
-          <Pressable style={styles.actionBtn} onPress={handleShare}>
-            <Text style={styles.actionIcon}>⎋</Text>
-            <Text style={styles.actionLabel}>Share</Text>
+          <Pressable style={[styles.actionBtn, { backgroundColor: colors.card }]} onPress={handleShare}>
+            <Text style={[styles.actionIcon, { color: colors.text }]}>⎋</Text>
+            <Text style={[styles.actionLabel, { color: colors.text }]}>Share</Text>
           </Pressable>
         </View>
 
         {/* ── Metadata Card ─────────────────────────────────── */}
-        <View style={styles.card}>
+        <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
           {image ? (
             <>
-              <Text style={styles.author}>{image.author}</Text>
+              <Text style={[styles.author, { color: colors.text }]}>{image.author}</Text>
 
               <View style={styles.metaRow}>
-                <MetaItem label="ID" value={image.id} />
-                <MetaItem label="Width" value={`${image.width}px`} />
-                <MetaItem label="Height" value={`${image.height}px`} />
+                <MetaItem label="ID" value={image.id} colors={colors} />
+                <MetaItem label="Width" value={`${image.width}px`} colors={colors} />
+                <MetaItem label="Height" value={`${image.height}px`} colors={colors} />
               </View>
 
-              <Text style={styles.sectionLabel}>Original URL</Text>
-              <Text style={styles.urlText} numberOfLines={2}>
+              <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>Original URL</Text>
+              <Text style={[styles.urlText, { color: colors.primary }]} numberOfLines={2}>
                 {image.url}
               </Text>
 
-              <Text style={styles.sectionLabel}>Download URL</Text>
-              <Text style={styles.urlText} numberOfLines={2}>
+              <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>Download URL</Text>
+              <Text style={[styles.urlText, { color: colors.primary }]} numberOfLines={2}>
                 {image.download_url}
               </Text>
             </>
           ) : (
             <>
-              <Text style={styles.author}>Image #{itemId}</Text>
-              <Text style={styles.description}>
+              <Text style={[styles.author, { color: colors.text }]}>Image #{itemId}</Text>
+              <Text style={[styles.description, { color: colors.textSecondary }]}>
                 Viewing image with ID{' '}
-                <Text style={styles.bold}>{itemId}</Text>.
+                <Text style={[styles.bold, { color: colors.text }]}>{itemId}</Text>.
               </Text>
             </>
           )}
         </View>
 
         {/* ── Back button ───────────────────────────────────── */}
-        <Pressable style={styles.backBtn} onPress={() => navigation.goBack()}>
-          <Text style={styles.backBtnText}>← Go Back</Text>
+        <Pressable style={[styles.backBtn, { backgroundColor: colors.inputBackground }]} onPress={() => navigation.goBack()}>
+          <Text style={[styles.backBtnText, { color: colors.primary }]}>← Go Back</Text>
         </Pressable>
       </ScrollView>
 
@@ -258,14 +254,16 @@ export default function DetailScreen({
 function MetaItem({
   label,
   value,
+  colors,
 }: {
   label: string;
   value: string;
+  colors: any;
 }): React.JSX.Element {
   return (
-    <View style={styles.metaItem}>
-      <Text style={styles.metaLabel}>{label}</Text>
-      <Text style={styles.metaValue}>{value}</Text>
+    <View style={[styles.metaItem, { backgroundColor: colors.inputBackground }]}>
+      <Text style={[styles.metaLabel, { color: colors.textSecondary }]}>{label}</Text>
+      <Text style={[styles.metaValue, { color: colors.text }]}>{value}</Text>
     </View>
   );
 }
@@ -277,7 +275,6 @@ function MetaItem({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0f0f1a',
   },
   scroll: {
     paddingBottom: 40,
@@ -290,7 +287,6 @@ const styles = StyleSheet.create({
   image: {
     width: SCREEN_WIDTH,
     height: SCREEN_WIDTH * 0.75,
-    backgroundColor: '#16213e',
   },
   imageHidden: {
     opacity: 0,
@@ -303,13 +299,11 @@ const styles = StyleSheet.create({
     bottom: 0,
     width: SCREEN_WIDTH,
     height: SCREEN_WIDTH * 0.75,
-    backgroundColor: '#16213e',
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 1,
   },
   loadingText: {
-    color: '#6b7280',
     fontSize: 12,
     marginTop: 8,
   },
@@ -337,21 +331,18 @@ const styles = StyleSheet.create({
   },
   actionBtn: {
     flex: 1,
-    backgroundColor: '#1a1a2e',
     borderRadius: 12,
     paddingVertical: 14,
     alignItems: 'center',
     gap: 4,
   },
   downloadBtn: {
-    backgroundColor: '#6c63ff',
+    // colors.primary applied dynamically
   },
   actionIcon: {
     fontSize: 20,
-    color: '#d1d5db',
   },
   actionLabel: {
-    color: '#d1d5db',
     fontSize: 12,
     fontWeight: '500',
   },
@@ -361,26 +352,23 @@ const styles = StyleSheet.create({
 
   // Card
   card: {
-    backgroundColor: '#1a1a2e',
     borderRadius: 16,
     padding: 24,
     marginHorizontal: 16,
     marginTop: 12,
+    borderWidth: 1,
   },
   author: {
     fontSize: 22,
     fontWeight: '700',
-    color: '#ffffff',
     marginBottom: 16,
   },
   description: {
     fontSize: 14,
-    color: '#9ca3af',
     lineHeight: 22,
   },
   bold: {
     fontWeight: '700',
-    color: '#ffffff',
   },
 
   // Meta grid
@@ -391,28 +379,24 @@ const styles = StyleSheet.create({
   },
   metaItem: {
     flex: 1,
-    backgroundColor: '#16213e',
     borderRadius: 10,
     padding: 12,
     alignItems: 'center',
   },
   metaLabel: {
     fontSize: 11,
-    color: '#6b7280',
     fontWeight: '600',
     textTransform: 'uppercase',
     marginBottom: 4,
   },
   metaValue: {
     fontSize: 15,
-    color: '#ffffff',
     fontWeight: '600',
   },
 
   // URL sections
   sectionLabel: {
     fontSize: 12,
-    color: '#6b7280',
     fontWeight: '600',
     textTransform: 'uppercase',
     marginBottom: 4,
@@ -420,13 +404,11 @@ const styles = StyleSheet.create({
   },
   urlText: {
     fontSize: 13,
-    color: '#6c63ff',
     lineHeight: 20,
   },
 
   // Back
   backBtn: {
-    backgroundColor: '#16213e',
     borderRadius: 10,
     paddingVertical: 14,
     marginHorizontal: 16,
@@ -434,7 +416,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   backBtnText: {
-    color: '#6c63ff',
     fontWeight: '600',
     fontSize: 15,
   },

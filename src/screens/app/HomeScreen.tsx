@@ -1,8 +1,6 @@
 /**
  * HomeScreen – Picsum image gallery with infinite scroll,
  * debounced search, composite author filter, and local favoriting.
- *
- * API: https://picsum.photos/v2/list?page={page}&limit=20
  */
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -20,6 +18,7 @@ import {
 } from 'react-native';
 
 import { useGallery } from '../../context/GalleryContext';
+import { useTheme } from '../../context/ThemeContext';
 import { useDebounce } from '../../hooks/useDebounce';
 import type { PicsumImage } from '../../types/picsum';
 import type { HomeScreenProps } from '../../navigation/types';
@@ -47,6 +46,8 @@ const FILTER_OPTIONS: { key: AuthorFilter; label: string }[] = [
 export default function HomeScreen({
   navigation,
 }: HomeScreenProps): React.JSX.Element {
+  const { colors, toggleTheme, isDark } = useTheme();
+
   // -- Data state -----------------------------------------------------------
   const [images, setImages] = useState<PicsumImage[]>([]);
   const [page, setPage] = useState<number>(1);
@@ -174,13 +175,13 @@ export default function HomeScreen({
 
       return (
         <Pressable
-          style={styles.card}
+          style={[styles.card, { backgroundColor: colors.card }]}
           onPress={() =>
             navigation.navigate('DetailScreen', { itemId: item.id, image: item })
           }>
           <Image
             source={{ uri: thumbnailUrl }}
-            style={styles.cardImage}
+            style={[styles.cardImage, { backgroundColor: colors.inputBackground }]}
             resizeMode="cover"
           />
 
@@ -195,17 +196,17 @@ export default function HomeScreen({
           </Pressable>
 
           <View style={styles.cardFooter}>
-            <Text style={styles.cardAuthor} numberOfLines={1}>
+            <Text style={[styles.cardAuthor, { color: colors.text }]} numberOfLines={1}>
               {item.author}
             </Text>
-            <Text style={styles.cardDim}>
+            <Text style={[styles.cardDim, { color: colors.textSecondary }]}>
               {item.width} × {item.height}
             </Text>
           </View>
         </Pressable>
       );
     },
-    [isFavorite, toggleFavorite, navigation],
+    [isFavorite, toggleFavorite, navigation, colors],
   );
 
   const keyExtractor = useCallback(
@@ -217,11 +218,11 @@ export default function HomeScreen({
   const renderSkeleton = (): React.JSX.Element => (
     <View style={styles.skeletonContainer}>
       {[1, 2, 3, 4].map(i => (
-        <View key={i} style={styles.skeletonCard}>
-          <View style={styles.skeletonImage} />
+        <View key={i} style={[styles.skeletonCard, { backgroundColor: colors.card }]}>
+          <View style={[styles.skeletonImage, { backgroundColor: colors.inputBackground }]} />
           <View style={styles.skeletonFooter}>
-            <View style={styles.skeletonLine} />
-            <View style={styles.skeletonLineShort} />
+            <View style={[styles.skeletonLine, { backgroundColor: colors.inputBackground }]} />
+            <View style={[styles.skeletonLineShort, { backgroundColor: colors.inputBackground }]} />
           </View>
         </View>
       ))}
@@ -236,8 +237,8 @@ export default function HomeScreen({
     return (
       <View style={styles.emptyContainer}>
         <Text style={styles.emptyIcon}>🔍</Text>
-        <Text style={styles.emptyTitle}>No images found</Text>
-        <Text style={styles.emptySubtitle}>
+        <Text style={[styles.emptyTitle, { color: colors.text }]}>No images found</Text>
+        <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>
           Try adjusting your search or filter.
         </Text>
       </View>
@@ -251,8 +252,8 @@ export default function HomeScreen({
     }
     return (
       <View style={styles.footerLoader}>
-        <ActivityIndicator size="small" color="#6c63ff" />
-        <Text style={styles.footerText}>Loading more…</Text>
+        <ActivityIndicator size="small" color={colors.primary} />
+        <Text style={[styles.footerText, { color: colors.textSecondary }]}>Loading more…</Text>
       </View>
     );
   };
@@ -260,14 +261,27 @@ export default function HomeScreen({
   // -- Main render ----------------------------------------------------------
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      {/* Header with Theme Toggle */}
+      <View style={styles.header}>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>FotoOwl</Text>
+        <Pressable
+          style={[styles.themeToggle, { backgroundColor: colors.card }]}
+          onPress={toggleTheme}
+          hitSlop={8}>
+          <Text style={{ fontSize: 18, color: colors.text }}>
+            {isDark ? '☀️' : '🌙'}
+          </Text>
+        </Pressable>
+      </View>
+
       {/* ── Search Bar ──────────────────────────────────────── */}
-      <View style={styles.searchContainer}>
+      <View style={[styles.searchContainer, { backgroundColor: colors.inputBackground }]}>
         <Text style={styles.searchIcon}>🔍</Text>
         <TextInput
-          style={styles.searchInput}
+          style={[styles.searchInput, { color: colors.text }]}
           placeholder="Search by author…"
-          placeholderTextColor="#666"
+          placeholderTextColor={colors.textSecondary}
           value={searchText}
           onChangeText={setSearchText}
           autoCapitalize="none"
@@ -276,7 +290,7 @@ export default function HomeScreen({
         />
         {searchText.length > 0 && (
           <Pressable onPress={() => setSearchText('')} hitSlop={8}>
-            <Text style={styles.clearBtn}>✕</Text>
+            <Text style={[styles.clearBtn, { color: colors.textSecondary }]}>✕</Text>
           </Pressable>
         )}
       </View>
@@ -288,13 +302,18 @@ export default function HomeScreen({
             key={opt.key}
             style={[
               styles.filterChip,
-              activeFilter === opt.key && styles.filterChipActive,
+              { backgroundColor: colors.inputBackground, borderColor: colors.border },
+              activeFilter === opt.key && {
+                backgroundColor: `${colors.primary}20`,
+                borderColor: colors.primary,
+              },
             ]}
             onPress={() => setActiveFilter(opt.key)}>
             <Text
               style={[
                 styles.filterChipText,
-                activeFilter === opt.key && styles.filterChipTextActive,
+                { color: colors.textSecondary },
+                activeFilter === opt.key && { color: colors.primary, fontWeight: '600' },
               ]}>
               {opt.label}
             </Text>
@@ -304,7 +323,7 @@ export default function HomeScreen({
 
       {/* ── Results count ───────────────────────────────────── */}
       {!isLoading && (
-        <Text style={styles.resultCount}>
+        <Text style={[styles.resultCount, { color: colors.textSecondary }]}>
           {filteredImages.length} image{filteredImages.length !== 1 ? 's' : ''}
         </Text>
       )}
@@ -325,8 +344,8 @@ export default function HomeScreen({
             <RefreshControl
               refreshing={isRefreshing}
               onRefresh={handleRefresh}
-              tintColor="#6c63ff"
-              colors={['#6c63ff']}
+              tintColor={colors.primary}
+              colors={[colors.primary]}
             />
           }
           ListEmptyComponent={renderEmpty}
@@ -354,17 +373,40 @@ export default function HomeScreen({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0f0f1a',
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 8,
+  },
+  headerTitle: {
+    fontSize: 28,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  themeToggle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
   },
 
   // Search
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#16213e',
     borderRadius: 12,
     marginHorizontal: 16,
-    marginTop: 12,
+    marginTop: 8,
     paddingHorizontal: 14,
     height: 48,
   },
@@ -374,12 +416,10 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     flex: 1,
-    color: '#ffffff',
     fontSize: 15,
     paddingVertical: 0,
   },
   clearBtn: {
-    color: '#9ca3af',
     fontSize: 16,
     padding: 4,
   },
@@ -395,27 +435,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: '#16213e',
     borderWidth: 1,
-    borderColor: '#16213e',
-  },
-  filterChipActive: {
-    backgroundColor: '#6c63ff20',
-    borderColor: '#6c63ff',
   },
   filterChipText: {
-    color: '#9ca3af',
     fontSize: 13,
     fontWeight: '500',
-  },
-  filterChipTextActive: {
-    color: '#6c63ff',
-    fontWeight: '600',
   },
 
   // Result count
   resultCount: {
-    color: '#6b7280',
     fontSize: 12,
     paddingHorizontal: 20,
     marginTop: 10,
@@ -430,15 +458,20 @@ const styles = StyleSheet.create({
 
   // Card
   card: {
-    backgroundColor: '#1a1a2e',
     borderRadius: 14,
     overflow: 'hidden',
     marginBottom: 12,
+    borderWidth: 1,
+    borderColor: 'transparent',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    elevation: 2,
   },
   cardImage: {
     width: '100%',
     height: IMAGE_HEIGHT,
-    backgroundColor: '#16213e',
   },
   heartBtn: {
     position: 'absolute',
@@ -466,14 +499,12 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   cardAuthor: {
-    color: '#ffffff',
     fontSize: 15,
     fontWeight: '600',
     flex: 1,
     marginRight: 8,
   },
   cardDim: {
-    color: '#6b7280',
     fontSize: 12,
   },
 
@@ -483,7 +514,6 @@ const styles = StyleSheet.create({
     paddingTop: 8,
   },
   skeletonCard: {
-    backgroundColor: '#1a1a2e',
     borderRadius: 14,
     overflow: 'hidden',
     marginBottom: 12,
@@ -491,7 +521,6 @@ const styles = StyleSheet.create({
   skeletonImage: {
     width: '100%',
     height: IMAGE_HEIGHT,
-    backgroundColor: '#16213e',
   },
   skeletonFooter: {
     padding: 14,
@@ -501,13 +530,11 @@ const styles = StyleSheet.create({
     width: '60%',
     height: 14,
     borderRadius: 7,
-    backgroundColor: '#16213e',
   },
   skeletonLineShort: {
     width: '30%',
     height: 10,
     borderRadius: 5,
-    backgroundColor: '#16213e',
   },
 
   // Empty state
@@ -521,13 +548,11 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   emptyTitle: {
-    color: '#ffffff',
     fontSize: 18,
     fontWeight: '600',
     marginBottom: 6,
   },
   emptySubtitle: {
-    color: '#9ca3af',
     fontSize: 14,
   },
 
@@ -540,7 +565,6 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   footerText: {
-    color: '#9ca3af',
     fontSize: 13,
   },
 });

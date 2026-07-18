@@ -19,6 +19,7 @@ import {
 import { useForm, Controller } from 'react-hook-form';
 
 import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
 import type { LoginScreenProps } from '../../navigation/types';
 
 // ---------------------------------------------------------------------------
@@ -38,6 +39,7 @@ export default function LoginScreen({
   navigation,
 }: LoginScreenProps): React.JSX.Element {
   const { login } = useAuth();
+  const { colors, toggleTheme, isDark } = useTheme();
 
   const {
     control,
@@ -59,14 +61,24 @@ export default function LoginScreen({
 
   return (
     <KeyboardAvoidingView
-      style={styles.container}
+      style={[styles.container, { backgroundColor: colors.background }]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <View style={styles.card}>
-        <Text style={styles.title}>Welcome Back</Text>
-        <Text style={styles.subtitle}>Sign in to continue</Text>
+      {/* Theme Toggle Button */}
+      <Pressable
+        style={[styles.themeToggle, { backgroundColor: colors.card }]}
+        onPress={toggleTheme}
+        hitSlop={8}>
+        <Text style={{ fontSize: 18, color: colors.text }}>
+          {isDark ? '☀️' : '🌙'}
+        </Text>
+      </Pressable>
+
+      <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        <Text style={[styles.title, { color: colors.text }]}>Welcome Back</Text>
+        <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Sign in to continue</Text>
 
         {/* ── Email ─────────────────────────────────────────────── */}
-        <Text style={styles.label}>Email</Text>
+        <Text style={[styles.label, { color: colors.text }]}>Email</Text>
         <Controller
           control={control}
           name="email"
@@ -79,9 +91,16 @@ export default function LoginScreen({
           }}
           render={({ field: { onChange, onBlur, value } }) => (
             <TextInput
-              style={[styles.input, errors.email && styles.inputError]}
+              style={[
+                styles.input,
+                {
+                  backgroundColor: colors.inputBackground,
+                  color: colors.text,
+                  borderColor: errors.email ? colors.error : colors.border,
+                },
+              ]}
               placeholder="john@example.com"
-              placeholderTextColor="#555"
+              placeholderTextColor={colors.textSecondary}
               autoCapitalize="none"
               keyboardType="email-address"
               onBlur={onBlur}
@@ -91,11 +110,11 @@ export default function LoginScreen({
           )}
         />
         {errors.email && (
-          <Text style={styles.error}>{errors.email.message}</Text>
+          <Text style={[styles.error, { color: colors.error }]}>{errors.email.message}</Text>
         )}
 
         {/* ── Password ──────────────────────────────────────────── */}
-        <Text style={styles.label}>Password</Text>
+        <Text style={[styles.label, { color: colors.text }]}>Password</Text>
         <Controller
           control={control}
           name="password"
@@ -108,9 +127,16 @@ export default function LoginScreen({
           }}
           render={({ field: { onChange, onBlur, value } }) => (
             <TextInput
-              style={[styles.input, errors.password && styles.inputError]}
+              style={[
+                styles.input,
+                {
+                  backgroundColor: colors.inputBackground,
+                  color: colors.text,
+                  borderColor: errors.password ? colors.error : colors.border,
+                },
+              ]}
               placeholder="Min 6 characters"
-              placeholderTextColor="#555"
+              placeholderTextColor={colors.textSecondary}
               secureTextEntry
               onBlur={onBlur}
               onChangeText={onChange}
@@ -119,23 +145,27 @@ export default function LoginScreen({
           )}
         />
         {errors.password && (
-          <Text style={styles.error}>{errors.password.message}</Text>
+          <Text style={[styles.error, { color: colors.error }]}>{errors.password.message}</Text>
         )}
 
         {/* ── Submit ────────────────────────────────────────────── */}
         <Pressable
-          style={[styles.button, isSubmitting && styles.buttonDisabled]}
+          style={[
+            styles.button,
+            { backgroundColor: colors.primary },
+            isSubmitting && styles.buttonDisabled,
+          ]}
           onPress={handleSubmit(onSubmit)}
           disabled={isSubmitting}>
-          <Text style={styles.buttonText}>
+          <Text style={[styles.buttonText, { color: colors.buttonText }]}>
             {isSubmitting ? 'Signing In…' : 'Log In'}
           </Text>
         </Pressable>
 
         <Pressable onPress={() => navigation.navigate('RegisterScreen')}>
-          <Text style={styles.link}>
+          <Text style={[styles.link, { color: colors.textSecondary }]}>
             Don't have an account?{' '}
-            <Text style={styles.linkBold}>Register</Text>
+            <Text style={[styles.linkBold, { color: colors.primary }]}>Register</Text>
           </Text>
         </Pressable>
       </View>
@@ -150,54 +180,57 @@ export default function LoginScreen({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0f0f1a',
     justifyContent: 'center',
     paddingHorizontal: 24,
   },
+  themeToggle: {
+    position: 'absolute',
+    top: 60,
+    right: 24,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
   card: {
-    backgroundColor: '#1a1a2e',
     borderRadius: 16,
     padding: 28,
+    borderWidth: 1,
   },
   title: {
     fontSize: 28,
     fontWeight: '700',
-    color: '#ffffff',
     marginBottom: 4,
   },
   subtitle: {
     fontSize: 14,
-    color: '#9ca3af',
     marginBottom: 24,
   },
   label: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#d1d5db',
     marginBottom: 6,
     marginTop: 12,
   },
   input: {
-    backgroundColor: '#16213e',
     borderRadius: 10,
     paddingHorizontal: 16,
     paddingVertical: 14,
-    color: '#ffffff',
     fontSize: 15,
     borderWidth: 1,
-    borderColor: '#16213e',
-  },
-  inputError: {
-    borderColor: '#ef4444',
   },
   error: {
-    color: '#ef4444',
     fontSize: 12,
     marginTop: 4,
     marginLeft: 4,
   },
   button: {
-    backgroundColor: '#6c63ff',
     borderRadius: 10,
     paddingVertical: 16,
     alignItems: 'center',
@@ -208,17 +241,14 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   buttonText: {
-    color: '#ffffff',
     fontSize: 16,
     fontWeight: '600',
   },
   link: {
     textAlign: 'center',
-    color: '#9ca3af',
     fontSize: 14,
   },
   linkBold: {
-    color: '#6c63ff',
     fontWeight: '600',
   },
 });
