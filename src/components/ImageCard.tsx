@@ -52,9 +52,14 @@ export function ImageCard({ item, onPress }: ImageCardProps): React.JSX.Element 
       </Pressable>
 
       <View style={styles.cardFooter}>
-        <Text style={[styles.cardAuthor, { color: colors.text }]} numberOfLines={1}>
-          {item.author}
-        </Text>
+        <View style={{ flex: 1, marginRight: 8 }}>
+          <Text style={[styles.cardAuthor, { color: colors.text }]} numberOfLines={1}>
+            {item.author}
+          </Text>
+          <Text style={[styles.cardId, { color: colors.textSecondary }]}>
+            ID: #{item.id}
+          </Text>
+        </View>
         <Text style={[styles.cardDim, { color: colors.textSecondary }]}>
           {item.width} × {item.height}
         </Text>
@@ -110,6 +115,10 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     flex: 1,
     marginRight: 8,
+  },
+  cardId: {
+    fontSize: 12,
+    marginTop: 2,
   },
   cardDim: {
     fontSize: 12,

@@ -6,7 +6,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { PicsumImage } from '../types/picsum';
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 50;
 
 export function useGalleryHook() {
   const [images, setImages] = useState<PicsumImage[]>([]);

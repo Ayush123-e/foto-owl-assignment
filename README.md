@@ -1,97 +1,125 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# FotoOwl Image Gallery & User Management Application
 
-# Getting Started
+A premium bare React Native application built with clean architecture, atomic component design, global state contexts, custom dark/light theme systems, and rich UX features.
 
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+---
 
-## Step 1: Start Metro
+## 📱 Features
 
-First, you will need to run **Metro**, the JavaScript build tool for React Native.
+1. **User Authentication & Session Persistence**:
+   * Complete validation on Registration (Full Name, Email, Gender, Mobile, Address, City, Password, Confirm Password).
+   * Exact 10-digit check for Mobile and min 6-character check for Password.
+   * Auto-login on app start using persisted storage session.
+2. **Picsum Image Gallery**:
+   * Dynamic image fetching from `https://picsum.photos/v2/list?limit=50`.
+   * High performance rendering via optimized `FlatList` with initial layouts, batch sizes, and image dimensions.
+   * Case-insensitive, client-side debounced search to avoid UI stutter and blocking.
+   * Category filter chips: **All**, **Author A-M**, **Author N-Z**.
+   * Pull-to-refresh with dual-request prevention locks.
+   * Infinite scroll pagination (`onEndReached`) loading subsequent pages dynamically.
+3. **Details View & Native Media Controls**:
+   * Full-screen interactive image viewer modal.
+   * Native image download directly to the device's photo gallery into a custom album (`FotoOwl`) using `expo-file-system` and `expo-media-library` with explicit permission handling.
+   * Native share sheets using standard React Native `Share` utilities.
+4. **Profile Management**:
+   * Inline editable profile details with React Hook Form validation.
+   * Centralized profile state updates reflecting instantly across the app without reloads.
+5. **Aesthetics & Theme Engine**:
+   * Global Light/Dark mode state switching toggles.
+   * Preserved color schemes, custom UI components, and modern typography.
 
-To start the Metro dev server, run the following command from the root of your React Native project:
+---
 
-```sh
-# Using npm
-npm start
+## 🛠️ Folder Structure
 
-# OR using Yarn
-yarn start
+```text
+foto-owl-assignment/
+├── android/               # Android Native project directory
+├── ios/                   # iOS Native project directory
+├── src/                   # Main source code directory
+│   ├── App.tsx            # App root, wrapping all Context Providers
+│   ├── components/        # Reusable Atomic UI components
+│   │   ├── Button.tsx
+│   │   ├── Input.tsx
+│   │   ├── ImageCard.tsx
+│   │   ├── Loader.tsx
+│   │   └── Toast.tsx
+│   ├── context/           # React Context Providers for global state
+│   │   ├── AuthContext.tsx    # Auth, registration, profile update, logout
+│   │   ├── GalleryContext.tsx # Centralized favorites management
+│   │   └── ThemeContext.tsx   # Light/dark mode color schemes & toggles
+│   ├── hooks/             # Custom React Hooks
+│   │   ├── useDebounce.ts     # Input debounce utility hook
+│   │   └── useGallery.ts      # Picsum API fetch, refresh, and pagination hook
+│   ├── navigation/        # React Navigation configurations
+│   │   ├── AppNavigator.tsx   # Auth-gated router stack and bottom tabs
+│   │   └── Types.ts           # Navigation typescript parameter lists
+│   ├── screens/           # Main screen screens
+│   │   ├── auth/              # Auth screens (Login, Register)
+│   │   │   ├── LoginScreen.tsx
+│   │   │   └── RegisterScreen.tsx
+│   │   ├── gallery/           # Gallery screens (Home, Detail)
+│   │   │   ├── HomeScreen.tsx
+│   │   │   └── DetailScreen.tsx
+│   │   └── user/              # User screens (Favorites, Profile)
+│   │       ├── FavoritesScreen.tsx
+│   │       └── ProfileScreen.tsx
+│   ├── types/             # Common TypeScript interfaces
+│   │   └── picsum.ts
+│   └── utils/             # Helper utilities
+│       ├── imageDownloader.ts # Cache & save images to native photo library
+│       ├── storage.ts         # Parsed AsyncStorage getter & setter wrapper
+│       └── validations.ts     # RegEx schemas for inputs
+├── README.md              # Project documentation
+├── package.json           # Node modules dependencies and helper scripts
+├── tsconfig.json          # TypeScript compilation configuration
+└── eas.json               # EAS build configuration profiles
 ```
 
-## Step 2: Build and run your app
+---
 
-With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
+## 📦 Key Libraries Used
 
-### Android
+*   **React Native (v0.86.0)**: Core framework.
+*   **React Navigation (v7)**: Navigation Container, Stack Navigator, and Bottom Tabs.
+*   **Expo Modules Core**: Brings Expo capabilities to bare React Native.
+*   **Expo File System**: Downloads high-resolution images to local cache.
+*   **Expo Media Library**: Saves downloaded files directly to the system photo library.
+*   **React Hook Form**: Highly performant validation form management.
+*   **Async Storage**: Local persistent storage for auth sessions, favorites, and active theme.
 
-```sh
-# Using npm
-npm run android
+---
 
-# OR using Yarn
-yarn android
-```
+## 📋 Assumptions Made
 
-### iOS
+1. **Picsum Image Search**: Picsum API doesn't offer a query parameter for filtering by author. Therefore, author-based searching is performed locally on the fetched image dataset. To prevent rendering overhead on every keystroke, a 300ms client-side debouncing is implemented.
+2. **Offline Data Persistence**: User credentials list (`@users_list`), current user session (`@current_user`), favorited images map (`@favorites`), and selected theme mode (`@app_theme`) are stored using `AsyncStorage`.
+3. **Android Target Build**: Due to strict emulator runtime limits on older target devices, JDK 21 and Gradle 8+ are configured to build successfully against Android target SDK 36.
 
-For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
+---
 
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
+## 🚀 Setup & Run Instructions
 
-```sh
-bundle install
-```
+### Prerequisites
+*   Node.js (>= 22.11.0)
+*   Android SDK / Android Studio configured with JDK 21
+*   Android Emulator booted and connected
 
-Then, and every time you update your native dependencies, run:
+### Steps to Run
 
-```sh
-bundle exec pod install
-```
+1.  **Install dependencies**:
+    ```bash
+    npm install
+    ```
 
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
+2.  **Start the Metro Server**:
+    ```bash
+    npm start
+    ```
 
-```sh
-# Using npm
-npm run ios
-
-# OR using Yarn
-yarn ios
-```
-
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
-
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
-
-## Step 3: Modify your app
-
-Now that you have successfully run the app, let's make changes!
-
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
-
-When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
-
-- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
-- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
-
-## Congratulations! :tada:
-
-You've successfully run and modified your React Native App. :partying_face:
-
-### Now what?
-
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
-
-# Troubleshooting
-
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
-
-# Learn More
-
-To learn more about React Native, take a look at the following resources:
-
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+3.  **Launch the App on Android Emulator**:
+    In a new terminal window, run the following helper script:
+    ```bash
+    npm run android
+    ```
+    *Note: The `npm run android` script has been pre-configured in `package.json` to automatically resolve and export local JDK and Android SDK home paths for easy execution.*
