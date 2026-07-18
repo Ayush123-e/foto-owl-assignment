@@ -9,6 +9,7 @@ import React from 'react';
 import { ActivityIndicator, StatusBar, StyleSheet, View, useColorScheme } from 'react-native';
 
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { GalleryProvider } from './context/GalleryContext';
 import AppNavigator from './navigation/AppNavigator';
 
 function AppContent(): React.JSX.Element {
@@ -30,8 +31,10 @@ export default function App(): React.JSX.Element {
 
   return (
     <AuthProvider>
-      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-      <AppContent />
+      <GalleryProvider>
+        <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
+        <AppContent />
+      </GalleryProvider>
     </AuthProvider>
   );
 }
