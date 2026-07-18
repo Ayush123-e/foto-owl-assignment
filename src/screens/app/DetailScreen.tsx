@@ -1,23 +1,39 @@
 /**
- * DetailScreen – displays a full-size Picsum image with metadata.
- * Receives `itemId` and optional `image` via route params.
+ * DetailScreen – full-screen image viewer with Download & Share.
+ *
+ * Features:
+ * - High-resolution image display from download_url
+ * - Download to device gallery (expo-file-system + expo-media-library)
+ * - Share image URL via React Native Share API
+ * - Favorite toggle via GalleryContext
+ * - Image metadata display (author, dimensions, URLs)
  */
 
-import React from 'react';
+import React, { useCallback, useState } from 'react';
 import {
+  ActivityIndicator,
   Dimensions,
   Image,
+  Modal,
   Pressable,
   ScrollView,
+  Share,
+  StatusBar,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
 
 import { useGallery } from '../../context/GalleryContext';
+import { downloadImageToGallery } from '../../utils/imageDownloader';
+import { showToast } from '../../components/Toast';
 import type { DetailScreenProps } from '../../navigation/types';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+
+// ---------------------------------------------------------------------------
+// Component
+// ---------------------------------------------------------------------------
 
 export default function DetailScreen({
   route,
@@ -26,72 +42,212 @@ export default function DetailScreen({
   const { itemId, image } = route.params;
   const { isFavorite, toggleFavorite } = useGallery();
 
-  const favorited = isFavorite(itemId);
-  const imageUrl = `https://picsum.photos/id/${itemId}/${Math.round(SCREEN_WIDTH)}/${Math.round(SCREEN_WIDTH * 0.75)}`;
+  const [isFullScreen, setIsFullScreen] = useState<boolean>(false);
+  const [isDownloading, setIsDownloading] = useState<boolean>(false);
+  const [imageLoaded, setImageLoaded] = useState<boolean>(false);
 
-  return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={styles.scroll}
-      showsVerticalScrollIndicator={false}>
-      {/* ── Image ──────────────────────────────────────────── */}
-      <View style={styles.imageWrapper}>
+  const favorited = isFavorite(itemId);
+
+  // Use download_url for high-res, fallback to picsum CDN.
+  const highResUrl = image?.download_url ?? `https://picsum.photos/id/${itemId}/1200/800`;
+  const previewUrl = `https://picsum.photos/id/${itemId}/${Math.round(SCREEN_WIDTH)}/${Math.round(SCREEN_WIDTH * 0.75)}`;
+
+  // -- Download handler ─────────────────────────────────────────
+  const handleDownload = useCallback(async (): Promise<void> => {
+    if (isDownloading) {
+      return;
+    }
+    setIsDownloading(true);
+    showToast('Starting download…');
+
+    const filename = `foto_owl_${itemId}_${Date.now()}.jpg`;
+    const result = await downloadImageToGallery(highResUrl, filename);
+
+    showToast(result.message);
+    setIsDownloading(false);
+  }, [isDownloading, highResUrl, itemId]);
+
+  // -- Share handler ────────────────────────────────────────────
+  const handleShare = useCallback(async (): Promise<void> => {
+    try {
+      const shareUrl = image?.url ?? `https://picsum.photos/id/${itemId}/info`;
+      await Share.share({
+        title: image ? `Photo by ${image.author}` : `Photo #${itemId}`,
+        message: image
+          ? `Check out this photo by ${image.author}!\n\n${shareUrl}`
+          : `Check out this photo!\n\n${shareUrl}`,
+        url: shareUrl, // iOS uses this field.
+      });
+    } catch {
+      showToast('Share cancelled or failed.');
+    }
+  }, [image, itemId]);
+
+  // -- Full-screen modal ────────────────────────────────────────
+  const renderFullScreenViewer = (): React.JSX.Element => (
+    <Modal
+      visible={isFullScreen}
+      transparent={true}
+      animationType="fade"
+      statusBarTranslucent={true}
+      onRequestClose={() => setIsFullScreen(false)}>
+      <StatusBar hidden={isFullScreen} />
+      <View style={styles.fullScreenOverlay}>
+        {/* Close button */}
+        <Pressable
+          style={styles.fullScreenClose}
+          onPress={() => setIsFullScreen(false)}
+          hitSlop={12}>
+          <Text style={styles.fullScreenCloseText}>✕</Text>
+        </Pressable>
+
+        {/* Full-res image */}
         <Image
-          source={{ uri: imageUrl }}
-          style={styles.image}
-          resizeMode="cover"
+          source={{ uri: highResUrl }}
+          style={styles.fullScreenImage}
+          resizeMode="contain"
         />
 
-        {/* Heart overlay */}
-        {image && (
+        {/* Bottom action bar */}
+        <View style={styles.fullScreenActions}>
+          {image && (
+            <Pressable
+              style={styles.fullScreenBtn}
+              onPress={() => toggleFavorite(image)}>
+              <Text
+                style={[
+                  styles.fullScreenBtnIcon,
+                  favorited && styles.heartActive,
+                ]}>
+                {favorited ? '♥' : '♡'}
+              </Text>
+            </Pressable>
+          )}
+          <Pressable style={styles.fullScreenBtn} onPress={handleDownload}>
+            <Text style={styles.fullScreenBtnIcon}>⤓</Text>
+          </Pressable>
+          <Pressable style={styles.fullScreenBtn} onPress={handleShare}>
+            <Text style={styles.fullScreenBtnIcon}>⎋</Text>
+          </Pressable>
+        </View>
+      </View>
+    </Modal>
+  );
+
+  // -- Main render ──────────────────────────────────────────────
+
+  return (
+    <View style={styles.container}>
+      <ScrollView
+        contentContainerStyle={styles.scroll}
+        showsVerticalScrollIndicator={false}>
+        {/* ── Image Preview ─────────────────────────────────── */}
+        <Pressable
+          style={styles.imageWrapper}
+          onPress={() => setIsFullScreen(true)}>
+          {!imageLoaded && (
+            <View style={styles.imagePlaceholder}>
+              <ActivityIndicator size="large" color="#6c63ff" />
+              <Text style={styles.loadingText}>Loading high-res…</Text>
+            </View>
+          )}
+          <Image
+            source={{ uri: previewUrl }}
+            style={[styles.image, !imageLoaded && styles.imageHidden]}
+            resizeMode="cover"
+            onLoad={() => setImageLoaded(true)}
+          />
+
+          {/* Tap to expand label */}
+          <View style={styles.expandHint}>
+            <Text style={styles.expandHintText}>⛶  Tap to view full screen</Text>
+          </View>
+        </Pressable>
+
+        {/* ── Action Buttons ────────────────────────────────── */}
+        <View style={styles.actionsRow}>
+          {/* Favorite */}
+          {image && (
+            <Pressable
+              style={styles.actionBtn}
+              onPress={() => toggleFavorite(image)}>
+              <Text
+                style={[
+                  styles.actionIcon,
+                  favorited && styles.heartActive,
+                ]}>
+                {favorited ? '♥' : '♡'}
+              </Text>
+              <Text style={styles.actionLabel}>
+                {favorited ? 'Saved' : 'Save'}
+              </Text>
+            </Pressable>
+          )}
+
+          {/* Download */}
           <Pressable
-            style={styles.heartBtn}
-            onPress={() => toggleFavorite(image)}
-            hitSlop={8}>
-            <Text style={[styles.heartIcon, favorited && styles.heartActive]}>
-              {favorited ? '♥' : '♡'}
+            style={[styles.actionBtn, styles.downloadBtn]}
+            onPress={handleDownload}
+            disabled={isDownloading}>
+            {isDownloading ? (
+              <ActivityIndicator size="small" color="#ffffff" />
+            ) : (
+              <Text style={styles.actionIcon}>⤓</Text>
+            )}
+            <Text style={styles.actionLabel}>
+              {isDownloading ? 'Saving…' : 'Download'}
             </Text>
           </Pressable>
-        )}
-      </View>
 
-      {/* ── Metadata card ──────────────────────────────────── */}
-      <View style={styles.card}>
-        {image ? (
-          <>
-            <Text style={styles.author}>{image.author}</Text>
+          {/* Share */}
+          <Pressable style={styles.actionBtn} onPress={handleShare}>
+            <Text style={styles.actionIcon}>⎋</Text>
+            <Text style={styles.actionLabel}>Share</Text>
+          </Pressable>
+        </View>
 
-            <View style={styles.metaRow}>
-              <MetaItem label="ID" value={image.id} />
-              <MetaItem label="Width" value={`${image.width}px`} />
-              <MetaItem label="Height" value={`${image.height}px`} />
-            </View>
+        {/* ── Metadata Card ─────────────────────────────────── */}
+        <View style={styles.card}>
+          {image ? (
+            <>
+              <Text style={styles.author}>{image.author}</Text>
 
-            <Text style={styles.sectionLabel}>Original URL</Text>
-            <Text style={styles.urlText} numberOfLines={2}>
-              {image.url}
-            </Text>
+              <View style={styles.metaRow}>
+                <MetaItem label="ID" value={image.id} />
+                <MetaItem label="Width" value={`${image.width}px`} />
+                <MetaItem label="Height" value={`${image.height}px`} />
+              </View>
 
-            <Text style={styles.sectionLabel}>Download URL</Text>
-            <Text style={styles.urlText} numberOfLines={2}>
-              {image.download_url}
-            </Text>
-          </>
-        ) : (
-          <>
-            <Text style={styles.author}>Image #{itemId}</Text>
-            <Text style={styles.description}>
-              Viewing image with ID <Text style={styles.bold}>{itemId}</Text>.
-            </Text>
-          </>
-        )}
-      </View>
+              <Text style={styles.sectionLabel}>Original URL</Text>
+              <Text style={styles.urlText} numberOfLines={2}>
+                {image.url}
+              </Text>
 
-      {/* ── Back button ────────────────────────────────────── */}
-      <Pressable style={styles.backBtn} onPress={() => navigation.goBack()}>
-        <Text style={styles.backBtnText}>← Go Back</Text>
-      </Pressable>
-    </ScrollView>
+              <Text style={styles.sectionLabel}>Download URL</Text>
+              <Text style={styles.urlText} numberOfLines={2}>
+                {image.download_url}
+              </Text>
+            </>
+          ) : (
+            <>
+              <Text style={styles.author}>Image #{itemId}</Text>
+              <Text style={styles.description}>
+                Viewing image with ID{' '}
+                <Text style={styles.bold}>{itemId}</Text>.
+              </Text>
+            </>
+          )}
+        </View>
+
+        {/* ── Back button ───────────────────────────────────── */}
+        <Pressable style={styles.backBtn} onPress={() => navigation.goBack()}>
+          <Text style={styles.backBtnText}>← Go Back</Text>
+        </Pressable>
+      </ScrollView>
+
+      {/* Full-screen modal viewer */}
+      {renderFullScreenViewer()}
+    </View>
   );
 }
 
@@ -126,6 +282,8 @@ const styles = StyleSheet.create({
   scroll: {
     paddingBottom: 40,
   },
+
+  // Image preview
   imageWrapper: {
     position: 'relative',
   },
@@ -134,20 +292,68 @@ const styles = StyleSheet.create({
     height: SCREEN_WIDTH * 0.75,
     backgroundColor: '#16213e',
   },
-  heartBtn: {
+  imageHidden: {
+    opacity: 0,
+  },
+  imagePlaceholder: {
     position: 'absolute',
-    bottom: 16,
-    right: 16,
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: '#0f0f1acc',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: SCREEN_WIDTH,
+    height: SCREEN_WIDTH * 0.75,
+    backgroundColor: '#16213e',
     justifyContent: 'center',
     alignItems: 'center',
+    zIndex: 1,
   },
-  heartIcon: {
-    fontSize: 24,
-    color: '#9ca3af',
+  loadingText: {
+    color: '#6b7280',
+    fontSize: 12,
+    marginTop: 8,
+  },
+  expandHint: {
+    position: 'absolute',
+    bottom: 12,
+    left: 12,
+    backgroundColor: '#0f0f1acc',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  expandHintText: {
+    color: '#d1d5db',
+    fontSize: 12,
+  },
+
+  // Action buttons row
+  actionsRow: {
+    flexDirection: 'row',
+    paddingHorizontal: 16,
+    marginTop: 16,
+    marginBottom: 8,
+    gap: 10,
+  },
+  actionBtn: {
+    flex: 1,
+    backgroundColor: '#1a1a2e',
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: 'center',
+    gap: 4,
+  },
+  downloadBtn: {
+    backgroundColor: '#6c63ff',
+  },
+  actionIcon: {
+    fontSize: 20,
+    color: '#d1d5db',
+  },
+  actionLabel: {
+    color: '#d1d5db',
+    fontSize: 12,
+    fontWeight: '500',
   },
   heartActive: {
     color: '#ef4444',
@@ -159,7 +365,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 24,
     marginHorizontal: 16,
-    marginTop: -24,
+    marginTop: 12,
   },
   author: {
     fontSize: 22,
@@ -231,5 +437,52 @@ const styles = StyleSheet.create({
     color: '#6c63ff',
     fontWeight: '600',
     fontSize: 15,
+  },
+
+  // Full-screen viewer
+  fullScreenOverlay: {
+    flex: 1,
+    backgroundColor: '#000000',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  fullScreenClose: {
+    position: 'absolute',
+    top: 50,
+    right: 20,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#ffffff20',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
+  },
+  fullScreenCloseText: {
+    color: '#ffffff',
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  fullScreenImage: {
+    width: SCREEN_WIDTH,
+    height: SCREEN_HEIGHT * 0.75,
+  },
+  fullScreenActions: {
+    position: 'absolute',
+    bottom: 50,
+    flexDirection: 'row',
+    gap: 16,
+  },
+  fullScreenBtn: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: '#ffffff20',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  fullScreenBtnIcon: {
+    fontSize: 22,
+    color: '#ffffff',
   },
 });

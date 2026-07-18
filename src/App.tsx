@@ -10,6 +10,7 @@ import { ActivityIndicator, StatusBar, StyleSheet, View, useColorScheme } from '
 
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { GalleryProvider } from './context/GalleryContext';
+import { Toast } from './components/Toast';
 import AppNavigator from './navigation/AppNavigator';
 
 function AppContent(): React.JSX.Element {
@@ -34,6 +35,7 @@ export default function App(): React.JSX.Element {
       <GalleryProvider>
         <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
         <AppContent />
+        <Toast />
       </GalleryProvider>
     </AuthProvider>
   );
