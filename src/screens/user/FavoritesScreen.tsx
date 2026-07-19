@@ -2,7 +2,7 @@
  * FavoritesScreen – displays all images the user has favorited with themes.
  */
 
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   Dimensions,
   FlatList,
@@ -10,6 +10,7 @@ import {
   Pressable,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from 'react-native';
 
@@ -28,11 +29,22 @@ export default function FavoritesScreen(
 ): React.JSX.Element {
   const { favorites, toggleFavorite } = useGallery();
   const { colors } = useTheme();
+  const [searchText, setSearchText] = useState<string>('');
 
   const favoritesList = useMemo<PicsumImage[]>(
     () => Object.values(favorites),
     [favorites],
   );
+
+  const filteredFavoritesList = useMemo<PicsumImage[]>(() => {
+    if (!searchText.trim()) {
+      return favoritesList;
+    }
+    const query = searchText.trim().toLowerCase();
+    return favoritesList.filter(item =>
+      item.author.toLowerCase().includes(query),
+    );
+  }, [favoritesList, searchText]);
 
   const renderItem = useCallback(
     ({ item }: { item: PicsumImage }): React.JSX.Element => {
@@ -67,25 +79,61 @@ export default function FavoritesScreen(
     [],
   );
 
-  const renderEmpty = (): React.JSX.Element => (
-    <View style={styles.emptyContainer}>
-      <Text style={styles.emptyIcon}>♡</Text>
-      <Text style={[styles.emptyTitle, { color: colors.text }]}>No favorites yet</Text>
-      <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>
-        Tap the heart icon on any image to save it here.
-      </Text>
-    </View>
-  );
+  const renderEmpty = (): React.JSX.Element => {
+    if (favoritesList.length === 0) {
+      return (
+        <View style={styles.emptyContainer}>
+          <Text style={styles.emptyIcon}>♡</Text>
+          <Text style={[styles.emptyTitle, { color: colors.text }]}>No favorites yet</Text>
+          <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>
+            Tap the heart icon on any image to save it here.
+          </Text>
+        </View>
+      );
+    }
+    return (
+      <View style={styles.emptyContainer}>
+        <Text style={styles.emptyIcon}>🔍</Text>
+        <Text style={[styles.emptyTitle, { color: colors.text }]}>No results found</Text>
+        <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>
+          Try adjusting your search for "{searchText}".
+        </Text>
+      </View>
+    );
+  };
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
+      {/* Search Bar */}
+      {favoritesList.length > 0 && (
+        <View style={[styles.searchContainer, { backgroundColor: colors.inputBackground }]}>
+          <Text style={styles.searchIcon}>🔍</Text>
+          <TextInput
+            style={[styles.searchInput, { color: colors.text }]}
+            placeholder="Search favorites by author…"
+            placeholderTextColor={colors.textSecondary}
+            value={searchText}
+            onChangeText={setSearchText}
+            autoCapitalize="none"
+            autoCorrect={false}
+            returnKeyType="search"
+          />
+          {searchText.length > 0 && (
+            <Pressable onPress={() => setSearchText('')} hitSlop={8}>
+              <Text style={[styles.clearBtn, { color: colors.textSecondary }]}>✕</Text>
+            </Pressable>
+          )}
+        </View>
+      )}
+
       {favoritesList.length > 0 && (
         <Text style={[styles.count, { color: colors.textSecondary }]}>
-          {favoritesList.length} favorite{favoritesList.length !== 1 ? 's' : ''}
+          Showing {filteredFavoritesList.length} of {favoritesList.length} favorite{favoritesList.length !== 1 ? 's' : ''}
         </Text>
       )}
+
       <FlatList
-        data={favoritesList}
+        data={filteredFavoritesList}
         renderItem={renderItem}
         keyExtractor={keyExtractor}
         numColumns={2}
@@ -101,6 +149,28 @@ export default function FavoritesScreen(
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 12,
+    marginHorizontal: 16,
+    marginTop: 16,
+    paddingHorizontal: 14,
+    height: 48,
+  },
+  searchIcon: {
+    fontSize: 16,
+    marginRight: 8,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 15,
+    paddingVertical: 0,
+  },
+  clearBtn: {
+    fontSize: 16,
+    padding: 4,
   },
   count: {
     fontSize: 12,
