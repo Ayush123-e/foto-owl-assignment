@@ -8,7 +8,7 @@
  * 4. Return success/failure with a user-friendly message.
  */
 
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 import * as MediaLibrary from 'expo-media-library/legacy';
 
 // ---------------------------------------------------------------------------
